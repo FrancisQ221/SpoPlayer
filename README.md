@@ -181,3 +181,5 @@ Este proyecto fue construido a puro código, café y madrugadas por un equipo de
 <div align="center">
   <sub>Hecho con ❤️ para los amantes de la música.</sub>
 </div>
+
+<!-- updated -->
