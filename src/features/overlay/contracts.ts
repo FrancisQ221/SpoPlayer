@@ -40,6 +40,7 @@ export interface OverlayAction {
     | "volumeDown"
     | "setVolume"
     | "focusMainWindow"
-    | "closeOverlay";
+    | "closeOverlay"
+    | "openSettings";
   payload?: any;
 }

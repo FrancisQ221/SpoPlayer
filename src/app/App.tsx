@@ -10,6 +10,7 @@ import { usePresenceSync } from "@/shared/presence";
 import { useThemeCustomizationSync } from "@/features/settings";
 import { useTouchBarSync } from "@/features/touchbar";
 import { useOverlaySync } from "@/features/overlay";
+import { useTraySync } from "@/features/tray";
 import { AppRoutes } from "./routes";
 import DeeplinkHandler from "./DeeplinkHandler";
 import EnvironmentWarning from "./EnvironmentWarning";
@@ -41,6 +42,11 @@ function OverlaySync() {
   return null;
 }
 
+function TraySync() {
+  useTraySync();
+  return null;
+}
+
 export default function App() {
   useWindowDrag();
 
@@ -59,6 +65,7 @@ export default function App() {
         <PresenceSync />
         <TouchBarSync />
         <OverlaySync />
+        <TraySync />
         <AppleEmojiProvider>
           <I18nProvider>
             <ToastProvider>

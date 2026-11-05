@@ -5,7 +5,8 @@ import {
   useIsTrackLiked,
   useLikeTrack,
   useUnlikeTrack,
-} from "@/features/library/hooks";
+  useModalStore,
+} from "@/features/library";
 import { useCoverSrc } from "@/features/covers";
 import { getAuthSession } from "@/shared/api";
 import { useAuthStore } from "@/features/auth/store/authStore";
@@ -144,6 +145,9 @@ export function useOverlaySync() {
           break;
         }
         case "focusMainWindow":
+          break;
+        case "openSettings":
+          useModalStore.getState().openSettings();
           break;
       }
     });

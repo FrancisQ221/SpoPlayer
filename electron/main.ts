@@ -140,6 +140,10 @@ const shutdown = createShutdown({
       discordRpcManager = null;
     },
     () => {
+      trayManager?.destroy();
+      trayManager = null;
+    },
+    () => {
       if (snapPreview && !snapPreview.isDestroyed()) snapPreview.destroy();
       snapPreview = null;
       nativeSnap?.destroy();
@@ -355,7 +359,19 @@ function createWindow() {
 
   mainWindow.on("close", (event) => {
     if (!shutdown.isQuitting()) {
-      event.preventDefault();
+      if (trayManager?.isCloseToTray()) {
+        event.preventDefault();
+        mainWindow?.hide();
+        trayManager?.updateMenu();
+        trayManager?.notifyFirstClose();
+      } else {
+        shutdown.quit();
+      }
+    }
+  });
+
+  mainWindow.on("minimize", () => {
+    if (trayManager?.isMinimizeToTray()) {
       mainWindow?.hide();
       trayManager?.updateMenu();
     }
@@ -516,6 +532,11 @@ if (!gotTheLock) {
           (beforeShow) => overlay.openForTransition(beforeShow),
           () => mainWindow?.minimize(),
         );
+        return;
+      }
+      if (trayManager?.isMinimizeToTray()) {
+        mainWindow.hide();
+        trayManager.updateMenu();
         return;
       }
       mainWindow.minimize();

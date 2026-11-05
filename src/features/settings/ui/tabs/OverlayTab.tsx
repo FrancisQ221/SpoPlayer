@@ -12,6 +12,7 @@ import { useShortcutsStore } from "@/features/shortcuts";
 import { acquireEscapeGuard } from "@/shared/utils/escapeGuard";
 import { ToggleSwitch, Tooltip } from "@/shared/ui";
 import { SettingRow, SettingSection, SegmentedControl } from "../controls";
+import { useTraySettingsStore } from "@/features/tray";
 
 const POSITION_CONFIG = [
   { value: "top-left" as const, key: "settings.overlay.position.top_left", fallback: "Top Left" },
@@ -59,6 +60,13 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
 
   const alwaysOnTop = useOverlaySettingsStore((s) => s.alwaysOnTop);
   const setAlwaysOnTop = useOverlaySettingsStore((s) => s.setAlwaysOnTop);
+
+  const closeToTray = useTraySettingsStore((s) => s.closeToTray);
+  const setCloseToTray = useTraySettingsStore((s) => s.setCloseToTray);
+  const minimizeToTray = useTraySettingsStore((s) => s.minimizeToTray);
+  const setMinimizeToTray = useTraySettingsStore((s) => s.setMinimizeToTray);
+  const notifyOnTrackChange = useTraySettingsStore((s) => s.notifyOnTrackChange);
+  const setNotifyOnTrackChange = useTraySettingsStore((s) => s.setNotifyOnTrackChange);
 
   const [isRecording, setIsRecording] = useState(false);
   const [heldModifiers, setHeldModifiers] = useState<string[]>([]);
@@ -168,7 +176,8 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
   }, [isRecording, setShortcut]);
 
   return (
-    <SettingSection>
+    <div className="flex flex-col gap-[16px]">
+      <SettingSection>
       <SettingRow
         title={t("settings.overlay.enabled.title") || "Enable overlay"}
         description={
@@ -283,7 +292,7 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
                       transition={{ duration: 0.08, ease: "easeOut" }}
                       className={heldModifiers.length > 0 ? "leading-none" : "tracking-widest leading-none"}
                     >
-                      {heldModifiers.length > 0 ? `${heldModifiers.join(" + ")} + ...` : "···"}
+                      {heldModifiers.length > 0 ? `${heldModifiers.join(" + ")} + ...` : "Â·Â·Â·"}
                     </motion.span>
                   ) : (
                     <motion.span
@@ -343,6 +352,53 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
         />
       </div>
     </SettingSection>
+
+    <SettingSection label="Bandeja del sistema">
+      <div className="flex flex-col gap-4">
+        <SettingRow
+          title="Minimizar a la bandeja al cerrar (X)"
+          description="Al hacer clic en el botón cerrar, ocultar SpoPlayer en la bandeja del sistema para seguir escuchando en lugar de salir."
+          titleKey="Minimizar a la bandeja al cerrar"
+          descKey="ocultar SpoPlayer en la bandeja del sistema"
+          searchQuery={searchQuery}
+          control={
+            <ToggleSwitch
+              checked={closeToTray}
+              onChange={setCloseToTray}
+            />
+          }
+        />
+
+        <SettingRow
+          title="Minimizar a la bandeja al minimizar (-)"
+          description="Al minimizar la ventana, ocultarla de la barra de tareas y dejarla disponible únicamente en la bandeja del sistema."
+          titleKey="Minimizar a la bandeja al minimizar"
+          descKey="ocultarla de la barra de tareas y dejarla en la bandeja"
+          searchQuery={searchQuery}
+          control={
+            <ToggleSwitch
+              checked={minimizeToTray}
+              onChange={setMinimizeToTray}
+            />
+          }
+        />
+
+        <SettingRow
+          title="Notificaciones de canción"
+          description="Mostrar una notificación nativa del sistema cuando comience una nueva canción mientras SpoPlayer esté en segundo plano."
+          titleKey="Notificaciones de canción"
+          descKey="notificación nativa del sistema cuando comience una canción"
+          searchQuery={searchQuery}
+          control={
+            <ToggleSwitch
+              checked={notifyOnTrackChange}
+              onChange={setNotifyOnTrackChange}
+            />
+          }
+        />
+      </div>
+    </SettingSection>
+    </div>
   );
 }
 

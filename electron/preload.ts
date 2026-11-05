@@ -135,6 +135,9 @@ export interface SpoPlayerElectronApi {
   discordUpdateSettings: (settings: any) => void;
   getDiscordStatus: () => Promise<{ connected: boolean; username?: string }>;
   mintPoToken: (identifier: string) => Promise<string>;
+  trayGetSettings?: () => Promise<{ closeToTray: boolean; minimizeToTray: boolean; notifyOnTrackChange: boolean }>;
+  trayUpdateSettings?: (patch: Partial<{ closeToTray: boolean; minimizeToTray: boolean; notifyOnTrackChange: boolean }>) => void;
+  onTraySettingsChanged?: (cb: (settings: { closeToTray: boolean; minimizeToTray: boolean; notifyOnTrackChange: boolean }) => void) => () => void;
 }
 
 const isHyprland = Boolean(
@@ -364,6 +367,15 @@ const api: SpoPlayerElectronApi = {
   },
   getDiscordStatus: () => ipcRenderer.invoke("discord:get-status"),
   mintPoToken: (identifier) => ipcRenderer.invoke("potoken:mint", identifier),
+  trayGetSettings: () => ipcRenderer.invoke("tray:get-settings"),
+  trayUpdateSettings: (patch) => ipcRenderer.send("tray:update-settings", patch),
+  onTraySettingsChanged: (cb) => {
+    const listener = (_event: unknown, settings: any) => cb(settings);
+    ipcRenderer.on("tray:settings-changed", listener);
+    return () => {
+      ipcRenderer.removeListener("tray:settings-changed", listener);
+    };
+  },
 };
 
 if (location.hostname === "www.youtube.com") {

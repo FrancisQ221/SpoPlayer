@@ -64,11 +64,14 @@ const SETTING_ITEMS: { tabId: TabId; titleKey: string; descKey?: string }[] = [
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.toggle_sleep_timer", descKey: "settings.shortcuts.toggle_sleep_timer_desc" },
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.toggle_lyrics_mode", descKey: "settings.shortcuts.toggle_lyrics_mode_desc" },
 
-  // Overlay
+  // Overlay & Tray
   { tabId: "Overlay", titleKey: "settings.overlay.position.title", descKey: "settings.overlay.position.description" },
   { tabId: "Overlay", titleKey: "settings.overlay.show_lyrics.title", descKey: "settings.overlay.show_lyrics.description" },
   { tabId: "Overlay", titleKey: "settings.overlay.auto_show_on_minimize.title", descKey: "settings.overlay.auto_show_on_minimize.description" },
   { tabId: "Overlay", titleKey: "settings.overlay.always_on_top.title", descKey: "settings.overlay.always_on_top.description" },
+  { tabId: "Overlay", titleKey: "Minimizar a la bandeja al cerrar", descKey: "ocultar SpoPlayer en la bandeja del sistema" },
+  { tabId: "Overlay", titleKey: "Minimizar a la bandeja al minimizar", descKey: "ocultarla de la barra de tareas y dejarla en la bandeja" },
+  { tabId: "Overlay", titleKey: "Notificaciones de canción", descKey: "notificación nativa del sistema cuando comience una canción" },
 
 
   // Appearance
@@ -257,7 +260,7 @@ export default function SettingsModal() {
           </div>
         </div>
 
-        {/* Lista de pestañas */}
+        {/* Lista de pestaÃ±as */}
         <nav
           className="flex-1 min-h-0 overflow-y-auto px-[10px] pb-[12px] flex flex-col gap-[14px]"
           role="tablist"
@@ -349,8 +352,8 @@ export default function SettingsModal() {
                 handleClose();
                 await logout();
               }}
-              title={t("settings.profile.sign_out") || "Cerrar sesión"}
-              aria-label={t("settings.profile.sign_out") || "Cerrar sesión"}
+              title={t("settings.profile.sign_out") || "Cerrar sesiÃ³n"}
+              aria-label={t("settings.profile.sign_out") || "Cerrar sesiÃ³n"}
               className="w-[28px] h-[28px] rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
               <ExitLine size={15} className="shrink-0" />
@@ -390,7 +393,7 @@ export default function SettingsModal() {
           </button>
         </div>
 
-        {/* Vista scrolleable con pestañas */}
+        {/* Vista scrolleable con pestaÃ±as */}
         <div className="flex-1 min-h-0 overflow-y-auto px-[26px] py-[16px] flex flex-col">
           <motion.div
             key={activeTab}
