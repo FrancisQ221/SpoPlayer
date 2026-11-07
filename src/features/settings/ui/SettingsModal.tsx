@@ -50,11 +50,8 @@ const SETTING_ITEMS: { tabId: TabId; titleKey: string; descKey?: string }[] = [
   { tabId: "Playback", titleKey: "settings.audio.pause_on_device_change.title", descKey: "settings.audio.pause_on_device_change.description" },
 
   // Shortcuts
-  { tabId: "Shortcuts", titleKey: "settings.shortcuts.global_section", descKey: "settings.shortcuts.global_desc" },
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.main_app_section", descKey: "settings.shortcuts.main_app_desc" },
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.miniplayer_section", descKey: "settings.shortcuts.miniplayer_desc" },
-  { tabId: "Shortcuts", titleKey: "settings.shortcuts.toggle_overlay", descKey: "settings.shortcuts.toggle_overlay_desc" },
-  { tabId: "Shortcuts", titleKey: "settings.shortcuts.quick_like_song", descKey: "settings.shortcuts.quick_like_song_desc" },
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.play_pause", descKey: "settings.shortcuts.play_pause_desc" },
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.next_track", descKey: "settings.shortcuts.next_track_desc" },
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.prev_track", descKey: "settings.shortcuts.prev_track_desc" },

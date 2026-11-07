@@ -246,30 +246,9 @@ export class OverlayManager {
     if (this.disposed) return;
     if (newShortcut) {
       this.shortcut = normalizeShortcut(newShortcut);
-    } else if (this.shortcut) {
-      this.shortcut = normalizeShortcut(this.shortcut);
     }
-
     this.unregisterShortcut();
-
-    if (this.shortcutsPaused || !this.enabled || !this.shortcut) return;
-
-    try {
-      const ok = globalShortcut.register(this.shortcut, () => {
-        if (!this.isAuthenticated || !this.enabled) return;
-        this.toggleOverlay();
-      });
-      if (ok) {
-        this.currentRegisteredShortcut = this.shortcut;
-      } else {
-        console.warn("[overlay] Failed to register global shortcut:", this.shortcut);
-      }
-    } catch (e) {
-      console.error("[overlay] Error registering global shortcut:", e);
-    }
-
-    // Ensure like shortcut is also active
-    this.registerLikeShortcut();
+    // Global shortcuts disabled per user request
   }
 
   public unregisterShortcut() {
@@ -290,33 +269,9 @@ export class OverlayManager {
     if (this.disposed) return;
     if (newShortcut) {
       this.likeShortcut = normalizeShortcut(newShortcut);
-    } else if (this.likeShortcut) {
-      this.likeShortcut = normalizeShortcut(this.likeShortcut);
     }
-
     this.unregisterLikeShortcut();
-
-    if (this.shortcutsPaused || !this.likeShortcut) return;
-
-    try {
-      const ok = globalShortcut.register(this.likeShortcut, () => {
-        if (!this.isAuthenticated) return;
-        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-          this.mainWindow.webContents.send("overlay:action", {
-            type: "like",
-            payload: { fromGlobalShortcut: true },
-            fromGlobalShortcut: true,
-          });
-        }
-      });
-      if (ok) {
-        this.currentRegisteredLikeShortcut = this.likeShortcut;
-      } else {
-        console.warn("[overlay] Failed to register global like shortcut:", this.likeShortcut);
-      }
-    } catch (e) {
-      console.error("[overlay] Error registering global like shortcut:", e);
-    }
+    // Global shortcuts disabled per user request
   }
 
   public unregisterLikeShortcut() {

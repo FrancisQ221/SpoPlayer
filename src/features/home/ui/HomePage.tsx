@@ -38,13 +38,6 @@ export default function HomePage() {
   const { data: recentlyPlayed, isLoading: recentLoading } = useRecentlyPlayed(20);
   const { data: dailyMixes } = useDailyMixes();
 
-  const isDataLoading =
-    tracksLoading ||
-    allTimeLoading ||
-    popularLoading ||
-    recentLoading ||
-    likedLoading;
-
   const popularAlbums = popularItems?.filter((it) => it.type === "album") ?? [];
   const popularPlaylists = popularItems?.filter((it) => it.type === "playlist") ?? [];
 
@@ -68,15 +61,20 @@ export default function HomePage() {
 
   const hasEnoughQuickData = quickRecentItems.length >= 3;
 
-  const isReady = !isDataLoading;
-  const [skeletonExited, setSkeletonExited] = useState(() => !isDataLoading);
+  // If we already have any data in memory, render immediately with zero delay
+  const hasAnyData = Boolean(
+    (popularTracksOnly && popularTracksOnly.length > 0) ||
+    (popularItems && popularItems.length > 0) ||
+    (recentlyPlayed && recentlyPlayed.length > 0) ||
+    (likedData && likedData.total > 0),
+  );
+
+  const isReady = hasAnyData || !tracksLoading;
+  const [skeletonExited, setSkeletonExited] = useState(() => hasAnyData || !tracksLoading);
 
   useEffect(() => {
     if (isReady && !skeletonExited) {
-      const timer = setTimeout(() => {
-        setSkeletonExited(true);
-      }, 400);
-      return () => clearTimeout(timer);
+      setSkeletonExited(true);
     }
   }, [isReady, skeletonExited]);
 
@@ -122,7 +120,7 @@ export default function HomePage() {
                 <div className="px-8 mt-[12px] relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   <SongCard
                     title={t("library.liked_songs") || "Canciones que te gustan"}
-                    artists={`${likedData.total} ${likedData.total === 1 ? (t("library.song") || "canción") : (t("library.songs") || "canciones")}`}
+                    artists={`${likedData.total} ${likedData.total === 1 ? (t("library.song") || "canciÃ³n") : (t("library.songs") || "canciones")}`}
                     artistsClickable={false}
                     coverUrl=""
                     icon={<HeartFill size={22} className={hasCustomBg ? "text-white/80" : "text-zinc-400 dark:text-zinc-500"} />}
@@ -195,7 +193,7 @@ export default function HomePage() {
             {/* Listening Right Now (Tendencias) */}
             {popularTracksOnly && popularTracksOnly.length > 0 && (
               <PopularTracksSection
-                title={t("home.whatEveryonesOn") || "Lo que todos están escuchando"}
+                title={t("home.whatEveryonesOn") || "Lo que todos estÃ¡n escuchando"}
                 icon={<FireFill className="w-5 h-5 text-amber-500" />}
                 items={popularTracksOnly}
                 headingMarginTop="mt-[22px]"
@@ -215,7 +213,7 @@ export default function HomePage() {
             {/* Most Listened of All Time */}
             {popularTracksAllTime && popularTracksAllTime.length > 0 && (
               <PopularTracksSection
-                title={t("home.mostListened") || "Más escuchadas de todos los tiempos"}
+                title={t("home.mostListened") || "MÃ¡s escuchadas de todos los tiempos"}
                 icon={<TrophyFill className="w-5 h-5 text-yellow-500" />}
                 items={popularTracksAllTime}
                 headingMarginTop="mt-[22px]"
@@ -225,7 +223,7 @@ export default function HomePage() {
             {/* Top Albums */}
             {popularAlbums && popularAlbums.length > 0 && (
               <PopularTracksSection
-                title={t("home.popularAlbums") || "Álbumes populares"}
+                title={t("home.popularAlbums") || "Ãlbumes populares"}
                 icon={<AlbumFill className="w-5 h-5 text-emerald-400" />}
                 items={popularAlbums}
                 headingMarginTop="mt-[22px]"
@@ -235,7 +233,7 @@ export default function HomePage() {
             {/* Popular Playlists */}
             {popularPlaylists && popularPlaylists.length > 0 && (
               <PopularTracksSection
-                title={t("home.popularPlaylists") || "Listas de reproducción populares"}
+                title={t("home.popularPlaylists") || "Listas de reproducciÃ³n populares"}
                 icon={<PlaylistFill className="w-5 h-5 text-rose-400" />}
                 items={popularPlaylists}
                 headingMarginTop="mt-[22px]"

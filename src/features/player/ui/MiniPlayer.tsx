@@ -824,139 +824,9 @@ function MiniPlayer({
                 {formatPlaybackTime(player.positionMs)} / {formatPlaybackTime(durationMs)}
               </span>
               <div
-                className="flex items-center gap-[2px] rounded-lg bg-[#ebebed] dark:bg-[#141414] p-[3px] pointer-events-auto prevent-seek cursor-default"
+                className="flex items-center gap-[4px] rounded-lg bg-[#ebebed] dark:bg-[#141414] p-[3px] pointer-events-auto prevent-seek cursor-default"
                 onPointerDown={(e) => e.stopPropagation()}
               >
-              <button
-                type="button"
-                aria-label="Shuffle"
-                title={player.shuffle ? t("player.shuffle_on") : t("player.shuffle_off")}
-                className={`${iconButtonClass} ${
-                  player.shuffle ? activeToggleClass : ""
-                }`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => playerEngine.setShuffle(!player.shuffle)}
-              >
-                <Shuffle size={18} weight="Outline" />
-              </button>
-              <button
-                type="button"
-                aria-label={repeatLabel}
-                title={repeatLabel}
-                className={`${iconButtonClass} ${
-                  player.repeat !== "off" ? activeToggleClass : ""
-                }`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() =>
-                  playerEngine.setRepeat(
-                    // radio has no repeat-all: it refills instead of looping
-                    nextRepeatMode(player.repeat, isRadioContext(player.playbackContext)),
-                  )
-                }
-              >
-                {repeatIcon}
-              </button>
-              <button
-                ref={speedToggleRef}
-                type="button"
-                aria-label="Speed and Pitch"
-                title={`${t("player.speed_pitch")}: x${(player.playbackRate ?? 1).toFixed(2)}`}
-                className={`${iconButtonClass} ${
-                  speedOpen ||
-                  Math.abs((player.playbackRate ?? 1) - 1) > 0.001 ||
-                  Math.abs(player.pitchSemitones ?? 0) > 0.001
-                    ? "bg-white/[0.09] text-white"
-                    : ""
-                }`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setVolumeOpen(false);
-                  onQueueOpenChange?.(false);
-                  setSpeedOpen((prev) => !prev);
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <motion.div
-                  animate={{
-                    scale: speedOpen ? 1.08 : 1,
-                  }}
-                  transition={{ type: "spring", stiffness: 350, damping: 22 }}
-                  className="flex items-center justify-center"
-                >
-                  <PlaybackSpeed
-                    size={18}
-                    weight={
-                      Math.abs((player.playbackRate ?? 1) - 1) > 0.001 ||
-                      Math.abs(player.pitchSemitones ?? 0) > 0.001
-                        ? "Bold"
-                        : "Outline"
-                    }
-                  />
-                </motion.div>
-              </button>
-              <button
-                ref={sleepTimerToggleRef}
-                type="button"
-                aria-label="Temporizador de sueÃ±o"
-                title="Temporizador de sueÃ±o"
-                className={`${iconButtonClass} relative ${
-                  sleepTimerOpen || sleepTimerType !== null
-                    ? "bg-white/[0.09] text-[var(--accent-primary,#00f59b)]"
-                    : ""
-                }`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setSpeedOpen(false);
-                  setVolumeOpen(false);
-                  onQueueOpenChange?.(false);
-                  toggleSleepTimer();
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <MoonLine size={18} />
-                {sleepTimerType !== null && (
-                  <span className="absolute top-[5px] right-[5px] h-[5px] w-[5px] rounded-full bg-[var(--accent-primary,#00f59b)] shadow-[0_0_6px_var(--accent-primary,#00f59b)]" />
-                )}
-              </button>
-              <button
-                type="button"
-                aria-label="Visualizador Zen"
-                title="Visualizador Zen (Pantalla Completa) (V)"
-                className={`${iconButtonClass} hover:text-[var(--accent-primary,#00f59b)]`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setSpeedOpen(false);
-                  setVolumeOpen(false);
-                  closeSleepTimer();
-                  onQueueOpenChange?.(false);
-                  openZenVisualizer();
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <WaveLine size={18} />
-              </button>
-              <button
-                type="button"
-                aria-label="Ecualizador de audio"
-                title="Ecualizador de audio"
-                className={`${iconButtonClass} relative hover:text-[var(--accent-primary,#00f59b)] ${
-                  eqEnabled ? "text-[var(--accent-primary,#00f59b)]" : ""
-                }`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setSpeedOpen(false);
-                  setVolumeOpen(false);
-                  closeSleepTimer();
-                  onQueueOpenChange?.(false);
-                  openEqualizer();
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <Filter2Line size={18} />
-                {eqEnabled && (
-                  <span className="absolute top-[5px] right-[5px] h-[5px] w-[5px] rounded-full bg-[var(--accent-primary,#00f59b)] shadow-[0_0_6px_var(--accent-primary,#00f59b)]" />
-                )}
-              </button>
               <button
                 ref={volumeToggleRef}
                 type="button"
@@ -970,7 +840,6 @@ function MiniPlayer({
                 onWheel={handleVolumeWheel}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSpeedOpen(false);
                   onQueueOpenChange?.(false);
                   handleToggleMute();
                   setVolumeOpen(true);
@@ -992,7 +861,6 @@ function MiniPlayer({
                 className={iconButtonClass}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => {
-                  setSpeedOpen(false);
                   setVolumeOpen(false);
                   onFullscreenOpen?.();
                 }}
@@ -1000,7 +868,7 @@ function MiniPlayer({
                 <MaximizeSquare3 size={18} weight="Outline" />
               </button>
               <span
-                className="mx-[3px] h-[16px] w-px bg-border-toolbox-divider"
+                className="mx-[2px] h-[16px] w-px bg-border-toolbox-divider"
                 aria-hidden="true"
               />
               <button
@@ -1010,7 +878,6 @@ function MiniPlayer({
                 className={iconButtonClass}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => {
-                  setSpeedOpen(false);
                   setVolumeOpen(false);
                   setQueueLimit(50);
                   onQueueToggle?.();
@@ -1026,9 +893,21 @@ function MiniPlayer({
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div
-            className="pointer-events-auto flex items-center gap-[8px] prevent-seek cursor-default"
+            className="pointer-events-auto flex items-center gap-[10px] prevent-seek cursor-default"
             onPointerDown={(e) => e.stopPropagation()}
           >
+            <button
+              type="button"
+              aria-label="Shuffle"
+              title={player.shuffle ? t("player.shuffle_on") : t("player.shuffle_off")}
+              className={`${iconButtonClass} ${
+                player.shuffle ? activeToggleClass : ""
+              }`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => playerEngine.setShuffle(!player.shuffle)}
+            >
+              <Shuffle size={18} weight="Outline" />
+            </button>
             <button
               type="button"
               aria-label="Previous track"
@@ -1087,6 +966,23 @@ function MiniPlayer({
               style={{ cursor: "pointer" }}
             >
               <SkipNext size={18} weight="Bold" />
+            </button>
+            <button
+              type="button"
+              aria-label={repeatLabel}
+              title={repeatLabel}
+              className={`${iconButtonClass} ${
+                player.repeat !== "off" ? activeToggleClass : ""
+              }`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() =>
+                playerEngine.setRepeat(
+                  // radio has no repeat-all: it refills instead of looping
+                  nextRepeatMode(player.repeat, isRadioContext(player.playbackContext)),
+                )
+              }
+            >
+              {repeatIcon}
             </button>
           </div>
         </div>

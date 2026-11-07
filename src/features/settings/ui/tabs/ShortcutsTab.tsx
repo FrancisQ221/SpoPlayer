@@ -8,7 +8,6 @@ import {
   VolumeSmall,
   VolumeCross,
   MusicNote,
-  Widget5,
   MaximizeSquare,
 } from "@solar-icons/react";
 import {
@@ -32,7 +31,6 @@ import {
   useShortcutsStore,
   normalizeShortcutToEnglish,
   DEFAULT_SHORTCUTS,
-  type GlobalShortcutsSettings,
   type MainAppShortcutsSettings,
   type MiniplayerShortcutsSettings,
   ResetIcon,
@@ -41,7 +39,7 @@ import { ShortcutRecorder } from "@/features/shortcuts/ui/ShortcutRecorder";
 
 const font = { fontFamily: "var(--font-inter), sans-serif" } as const;
 
-type ScopeFilter = "mainApp" | "miniplayer" | "global";
+type ScopeFilter = "mainApp" | "miniplayer";
 
 export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: string }) {
   const { t, locale } = useTranslation();
@@ -64,11 +62,9 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
     return () => window.removeEventListener("mousedown", handleOutsideClick);
   }, [recordingId]);
 
-  const global = useShortcutsStore((state) => state.global);
   const mainApp = useShortcutsStore((state) => state.mainApp);
   const miniplayer = useShortcutsStore((state) => state.miniplayer);
 
-  const setGlobalShortcut = useShortcutsStore((state) => state.setGlobalShortcut);
   const setMainAppShortcut = useShortcutsStore((state) => state.setMainAppShortcut);
   const setMiniplayerShortcut = useShortcutsStore((state) => state.setMiniplayerShortcut);
   const resetShortcut = useShortcutsStore((state) => state.resetShortcut);
@@ -82,18 +78,6 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
       "info"
     );
   }, [resetAll, toast, isRu]);
-
-  // Labels for Global Actions
-  const globalLabels: Record<keyof GlobalShortcutsSettings, { title: string; desc: string }> = {
-    toggleOverlay: {
-      title: t("settings.shortcuts.toggle_overlay") || "Toggle miniplayer overlay",
-      desc: t("settings.shortcuts.toggle_overlay_desc") || "Show or hide the floating desktop overlay from anywhere in the OS.",
-    },
-    quickLikeSong: {
-      title: t("settings.shortcuts.quick_like_song") || "Quick like current song",
-      desc: t("settings.shortcuts.quick_like_song_desc") || "Like or unlike current playing track system-wide without focusing the player.",
-    },
-  };
 
   // Labels for Main App Actions
   const mainAppLabels: Record<keyof MainAppShortcutsSettings, { title: string; desc: string }> = {
@@ -207,20 +191,6 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
     },
   };
 
-  // Conflict validation callback factories
-  const validateGlobalCandidate = useCallback(
-    (currentKey: keyof GlobalShortcutsSettings) => (candidate: string) => {
-      const norm = normalizeShortcutToEnglish(candidate).toLowerCase();
-      for (const [key, val] of Object.entries(global) as [keyof GlobalShortcutsSettings, string][]) {
-        if (key !== currentKey && normalizeShortcutToEnglish(val).toLowerCase() === norm) {
-          return { conflictWith: globalLabels[key].title };
-        }
-      }
-      return null;
-    },
-    [global, globalLabels]
-  );
-
   const validateMainAppCandidate = useCallback(
     (currentKey: keyof MainAppShortcutsSettings) => (candidate: string) => {
       const norm = normalizeShortcutToEnglish(candidate).toLowerCase();
@@ -247,21 +217,19 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
     [miniplayer, miniplayerLabels]
   );
 
-  const scopeTagLabels: Record<"global" | "mainApp" | "miniplayer", string> = {
-    global: t("settings.shortcuts.scope_global") || "Global",
+  const scopeTagLabels: Record<"mainApp" | "miniplayer", string> = {
     mainApp: t("settings.shortcuts.scope_main_app") || "Main App",
     miniplayer: t("settings.shortcuts.scope_overlay") || "Overlay",
   };
 
-  const scopeTagStyles: Record<"global" | "mainApp" | "miniplayer", string> = {
-    global: "bg-amber-400/10 text-amber-300",
+  const scopeTagStyles: Record<"mainApp" | "miniplayer", string> = {
     mainApp: "bg-border-alpha-14 text-text-secondary",
     miniplayer: "bg-purple-400/10 text-purple-300",
   };
 
   interface ShortcutRowItem {
     id: string;
-    scope: "global" | "mainApp" | "miniplayer";
+    scope: "mainApp" | "miniplayer";
     title: string;
     desc: string;
     icon: React.ComponentType<any>;
@@ -590,44 +558,16 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
         validateCandidate: validateMiniplayerCandidate("focusMainWindow"),
       },
 
-      // Global Actions
-      {
-        id: "global-toggleOverlay",
-        scope: "global",
-        title: globalLabels.toggleOverlay.title,
-        desc: globalLabels.toggleOverlay.desc,
-        icon: Widget5,
-        value: global.toggleOverlay,
-        defaultValue: DEFAULT_SHORTCUTS.global.toggleOverlay,
-        onChange: (val) => setGlobalShortcut("toggleOverlay", val),
-        onReset: () => resetShortcut("global", "toggleOverlay"),
-        validateCandidate: validateGlobalCandidate("toggleOverlay"),
-      },
-      {
-        id: "global-quickLikeSong",
-        scope: "global",
-        title: globalLabels.quickLikeSong.title,
-        desc: globalLabels.quickLikeSong.desc,
-        icon: HeartFill,
-        value: global.quickLikeSong,
-        defaultValue: DEFAULT_SHORTCUTS.global.quickLikeSong,
-        onChange: (val) => setGlobalShortcut("quickLikeSong", val),
-        onReset: () => resetShortcut("global", "quickLikeSong"),
-        validateCandidate: validateGlobalCandidate("quickLikeSong"),
-      },
+
     ];
   }, [
-    global,
     mainApp,
     miniplayer,
-    globalLabels,
     mainAppLabels,
     miniplayerLabels,
-    setGlobalShortcut,
     setMainAppShortcut,
     setMiniplayerShortcut,
     resetShortcut,
-    validateGlobalCandidate,
     validateMainAppCandidate,
     validateMiniplayerCandidate,
   ]);
@@ -660,11 +600,6 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
         value: "miniplayer" as ScopeFilter,
         label: t("settings.shortcuts.tab_overlay") || "Overlay",
         count: allItems.filter((i) => i.scope === "miniplayer").length,
-      },
-      {
-        value: "global" as ScopeFilter,
-        label: t("settings.shortcuts.tab_global") || "Global",
-        count: allItems.filter((i) => i.scope === "global").length,
       },
     ],
     [t, allItems]
@@ -827,7 +762,7 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
                       setRecordingId(null);
                     }}
                     onReset={item.onReset}
-                    isGlobal={item.scope === "global"}
+                    isGlobal={false}
                     validateCandidate={item.validateCandidate}
                     isRecording={isRowRecording}
                     onRecordingChange={(rec) => setRecordingId(rec ? item.id : null)}

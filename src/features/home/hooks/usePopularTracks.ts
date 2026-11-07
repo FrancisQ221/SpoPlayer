@@ -48,7 +48,7 @@ export const popularTracksAllTimeKeys = {
 };
 
 const cache = new Map<string, { data: PopularItem[]; timestamp: number }>();
-const CACHE_TTL = 300_000; // 5 minutos de cache
+const CACHE_TTL = 900_000; // 15 minutos de cache en memoria
 
 // Fallback search para canciones populares usando Innertube / YouTube Music
 async function fetchTrendingTracks(query: string, limit = 20): Promise<PopularItem[]> {
@@ -96,7 +96,7 @@ export function usePopularTracksOnly(limit = 20) {
           cache.set(`tracks_7d_${limit}`, { data: items, timestamp: Date.now() });
           setData(items);
         } else {
-          // Fallback a tendencias de catálogo
+          // Fallback a tendencias de catÃ¡logo
           fetchTrendingTracks("Top Hits 2024", limit).then((fallback) => {
             if (!active) return;
             cache.set(`tracks_7d_${limit}`, { data: fallback, timestamp: Date.now() });
@@ -194,7 +194,7 @@ export function usePopular(limit = 50) {
     let active = true;
     setIsLoading(true);
 
-    // Buscar álbumes y playlists populares de catálogo
+    // Buscar Ã¡lbumes y playlists populares de catÃ¡logo
     Promise.allSettled([
       api.search("Top Albums 2024", "album"),
       api.search("Top Hits Playlist", "playlist"),
