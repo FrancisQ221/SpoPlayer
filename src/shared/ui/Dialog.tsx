@@ -102,7 +102,7 @@ export default function Dialog({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[199] bg-black/60 backdrop-blur-sm overflow-hidden"
+          className="fixed inset-0 z-[199] bg-black/65 backdrop-blur-md overflow-hidden"
           style={zIndex ? { zIndex: zIndex - 1 } : undefined}
           onPointerDown={handlePointerDown}
           onClick={handleBackdropClick}
@@ -112,15 +112,15 @@ export default function Dialog({
         <motion.div
           key="dialog"
           data-dialog-container="true"
-          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.97, y: 10 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0, scale: 0.96, y: 12 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
           style={zIndex ? { zIndex } : undefined}
         >
           <div
-            className={`pointer-events-auto w-full mx-[16px] max-h-[85vh] flex flex-col rounded-xl border border-border-primary bg-bg-primary overflow-hidden relative ${
+            className={`pointer-events-auto w-full mx-[16px] max-h-[85vh] flex flex-col rounded-2xl border border-white/10 dark:border-white/10 bg-bg-primary shadow-[0_24px_70px_rgba(0,0,0,0.75)] overflow-hidden relative ${
               className || "pt-[16px]"
             }`}
             style={{ maxWidth, minHeight, ...(maxHeight ? { maxHeight } : {}) }}

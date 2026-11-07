@@ -723,33 +723,40 @@ function MiniPlayer({
               role="button"
               tabIndex={0}
               aria-label="Open player"
-              className={`relative h-[38px] w-[38px] shrink-0 overflow-hidden rounded-[8px] bg-bg-elevated cursor-pointer pointer-events-auto prevent-seek ${
-                coverUrl && !isCoverLoaded ? "animate-pulse" : ""
-              }`}
+              className="relative group h-[38px] w-[38px] shrink-0 overflow-visible cursor-pointer pointer-events-auto prevent-seek"
               onClick={onFullscreenOpen}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <CoverImage
-                key={coverUrl}
-                src={coverUrl}
-                alt="Track artwork"
-                width={38}
-                height={38}
-                priority
-                draggable={false}
-                onLoad={(e) => {
-                  extractAccentColor(e.currentTarget as HTMLImageElement);
-                }}
-                className="h-[38px] w-[38px] object-cover rounded-[8px]"
-              />
               {isPlaying && (
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center gap-[2.5px] pb-[7px] pointer-events-none transition-opacity duration-200">
-                  <span className="spoplayer-eq-bar" />
-                  <span className="spoplayer-eq-bar" />
-                  <span className="spoplayer-eq-bar" />
-                  <span className="spoplayer-eq-bar" />
-                </div>
+                <div className="absolute -inset-1 rounded-xl bg-[var(--accent-primary,#00f59b)]/30 blur-md pointer-events-none transition-all duration-300 group-hover:bg-[var(--accent-primary,#00f59b)]/50" />
               )}
+              <div
+                className={`relative h-[38px] w-[38px] shrink-0 overflow-hidden rounded-[8px] bg-bg-elevated transition-transform duration-200 group-hover:scale-105 ${
+                  coverUrl && !isCoverLoaded ? "animate-pulse" : ""
+                }`}
+              >
+                <CoverImage
+                  key={coverUrl}
+                  src={coverUrl}
+                  alt="Track artwork"
+                  width={38}
+                  height={38}
+                  priority
+                  draggable={false}
+                  onLoad={(e) => {
+                    extractAccentColor(e.currentTarget as HTMLImageElement);
+                  }}
+                  className="h-[38px] w-[38px] object-cover rounded-[8px]"
+                />
+                {isPlaying && (
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center gap-[2.5px] pb-[7px] pointer-events-none transition-opacity duration-200">
+                    <span className="spoplayer-eq-bar" />
+                    <span className="spoplayer-eq-bar" />
+                    <span className="spoplayer-eq-bar" />
+                    <span className="spoplayer-eq-bar" />
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex min-w-0 flex-col pointer-events-none">
               <p
@@ -796,8 +803,8 @@ function MiniPlayer({
             <button
               type="button"
               aria-label={isLiked ? "Unlike" : "Like"}
-              className={`${iconButtonClass} shrink-0 transition-colors duration-150 pointer-events-auto prevent-seek ${
-                isLiked ? "text-accent-primary" : "text-text-secondary hover:text-text-primary"
+              className={`${iconButtonClass} shrink-0 transition-all duration-200 pointer-events-auto prevent-seek active:scale-90 ${
+                isLiked ? "text-[var(--accent-primary,#00f59b)] drop-shadow-[0_0_8px_rgba(0,245,155,0.45)]" : "text-text-secondary hover:text-text-primary"
               }`}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={handleLikeToggle}
@@ -890,8 +897,8 @@ function MiniPlayer({
               <button
                 ref={sleepTimerToggleRef}
                 type="button"
-                aria-label="Temporizador de sueño"
-                title="Temporizador de sueño"
+                aria-label="Temporizador de sueÃ±o"
+                title="Temporizador de sueÃ±o"
                 className={`${iconButtonClass} relative ${
                   sleepTimerOpen || sleepTimerType !== null
                     ? "bg-white/[0.09] text-[var(--accent-primary,#00f59b)]"
@@ -1037,7 +1044,7 @@ function MiniPlayer({
             <button
               type="button"
               aria-label={isPlaying ? "Pause" : "Play"}
-              className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text transition-all duration-150 ease-out hover:scale-105 active:scale-[0.96] border-none cursor-pointer shadow-sm"
+              className="inline-flex h-[36px] w-[36px] items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text transition-all duration-150 ease-out hover:scale-110 active:scale-[0.93] border-none cursor-pointer shadow-[0_0_16px_rgba(0,245,155,0.35)] hover:shadow-[0_0_24px_rgba(0,245,155,0.6)]"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {
                 void playerEngine.togglePlayPause();
@@ -1045,7 +1052,7 @@ function MiniPlayer({
               style={{ cursor: "pointer" }}
             >
               {/* keep the morph icon mounted through the loading state
-                  (spinner overlays it) — swapping it out on "loading" would
+                  (spinner overlays it) â€” swapping it out on "loading" would
                   remount MorphIcon when the track starts, which skips the
                   play -> pause morph animation. */}
               <span className="relative flex h-[16px] w-[16px] items-center justify-center">

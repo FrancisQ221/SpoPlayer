@@ -12,6 +12,7 @@ import ArtistLink from "@/features/artist/ui/ArtistLink";
 import CoverImage from "@/features/covers/ui/CoverImage";
 import ExplicitBadge from "@/shared/ui/ExplicitBadge";
 import { useTranslation } from "@/languages";
+import { PlayFill } from "@mingcute/react";
 
 export interface PopularTracksSectionProps {
   title: string;
@@ -93,7 +94,7 @@ function TrackCard({
       });
       toast(t("common.added_to_queue"), "checkmark", {
         description: item.item.artists
-          ? `${item.item.title} — ${item.item.artists}`
+          ? `${item.item.title} â€” ${item.item.artists}`
           : item.item.title,
       });
     } else {
@@ -124,10 +125,10 @@ function TrackCard({
       onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-border-alpha-14">
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-border-alpha-14 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]">
         {showRanks && (
           <div
-            className={`absolute top-2 left-2 z-10 flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[3px] text-[10px] font-bold tracking-tight ${
+            className={`absolute top-2 left-2 z-10 flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[4px] text-[10px] font-bold tracking-tight shadow-sm ${
               index === 0
                 ? "bg-amber-400 text-black"
                 : index === 1
@@ -147,12 +148,18 @@ function TrackCard({
             alt={item.item.title}
             fill
             sizes="175px"
-            className={`object-cover transition-all duration-300 group-hover:brightness-[1.15] ${
+            className={`object-cover transition-all duration-300 group-hover:brightness-[1.12] ${
               imageLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={() => setImageLoaded(true)}
           />
         )}
+
+        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+          <div className="w-10 h-10 rounded-full bg-[var(--accent-primary,#00f59b)] text-black flex items-center justify-center shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-200">
+            <PlayFill size={20} className="ml-0.5" />
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col mt-[8px]">
@@ -237,9 +244,9 @@ function AlbumCard({
       onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-border-alpha-14">
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-border-alpha-14 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]">
         {showRanks && (
-          <div className="absolute top-2 left-2 z-10 flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[3px] text-[10px] font-bold tracking-tight bg-bg-panel text-text-secondary">
+          <div className="absolute top-2 left-2 z-10 flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[4px] text-[10px] font-bold tracking-tight bg-bg-panel text-text-secondary shadow-sm">
             #{index + 1}
           </div>
         )}
@@ -249,12 +256,17 @@ function AlbumCard({
             alt={item.item.title}
             fill
             sizes="175px"
-            className={`object-cover transition-all duration-300 group-hover:brightness-[1.15] ${
+            className={`object-cover transition-all duration-300 group-hover:brightness-[1.12] ${
               imageLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={() => setImageLoaded(true)}
           />
         )}
+        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+          <div className="w-10 h-10 rounded-full bg-[var(--accent-primary,#00f59b)] text-black flex items-center justify-center shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-200">
+            <PlayFill size={20} className="ml-0.5" />
+          </div>
+        </div>
       </div>
       <div className="flex flex-col mt-[8px]">
         <span className="truncate text-[14px] font-[500] text-text-primary">
@@ -335,9 +347,9 @@ function PlaylistCard({
       onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-border-alpha-14">
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-border-alpha-14 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]">
         {showRanks && (
-          <div className="absolute top-2 left-2 z-10 flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[3px] text-[10px] font-bold tracking-tight bg-bg-panel text-text-secondary">
+          <div className="absolute top-2 left-2 z-10 flex items-center justify-center min-w-[22px] h-[20px] px-1 rounded-[4px] text-[10px] font-bold tracking-tight bg-bg-panel text-text-secondary shadow-sm">
             #{index + 1}
           </div>
         )}
@@ -347,12 +359,17 @@ function PlaylistCard({
             alt={item.item.title}
             fill
             sizes="175px"
-            className={`object-cover transition-all duration-300 group-hover:brightness-[1.15] ${
+            className={`object-cover transition-all duration-300 group-hover:brightness-[1.12] ${
               imageLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={() => setImageLoaded(true)}
           />
         )}
+        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+          <div className="w-10 h-10 rounded-full bg-[var(--accent-primary,#00f59b)] text-black flex items-center justify-center shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-200">
+            <PlayFill size={20} className="ml-0.5" />
+          </div>
+        </div>
       </div>
       <div className="flex flex-col mt-[8px]">
         <span className="truncate text-[14px] font-[500] text-text-primary">

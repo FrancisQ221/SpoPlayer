@@ -219,6 +219,7 @@ export const TimelineSlider = memo(function TimelineSlider({
             style={{
               width: `${percentage}%`,
               ...(fillColor ? { backgroundColor: fillColor } : {}),
+              boxShadow: isActive ? "0 0 12px var(--accent-primary, #00f59b)" : "none",
             }}
           />
         </motion.div>
@@ -229,11 +230,11 @@ export const TimelineSlider = memo(function TimelineSlider({
             className="pointer-events-none absolute top-1/2 rounded-full z-10 transition-transform duration-150 ease-out"
             style={{
               left: `${percentage}%`,
-              width: size === "xs" ? 9 : 12,
-              height: size === "xs" ? 9 : 12,
+              width: size === "xs" ? 10 : 13,
+              height: size === "xs" ? 10 : 13,
               backgroundColor: fillColor || "var(--accent-primary, #00f59b)",
-              boxShadow: "0 0 10px var(--accent-primary, #00f59b), 0 1px 3px rgba(0,0,0,0.5)",
-              transform: `translate(-50%, -50%) scale(${isActive ? 1 : 0})`,
+              boxShadow: "0 0 14px var(--accent-primary, #00f59b), 0 2px 6px rgba(0,0,0,0.6)",
+              transform: `translate(-50%, -50%) scale(${isActive ? (isDragging ? 1.3 : 1.15) : 0})`,
               opacity: isActive ? 1 : 0,
             }}
           />

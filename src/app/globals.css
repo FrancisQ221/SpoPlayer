@@ -192,15 +192,39 @@ html, body {
   color: #05120a;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-*::-webkit-scrollbar {
-  display: none;
+/* Modern Sleek Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary, #00f59b);
+  box-shadow: 0 0 10px var(--accent-primary, #00f59b);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary, #ff3b3b);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.18);
+}
+
 * {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
   user-select: none;
 }
 
@@ -320,7 +344,7 @@ button.apple-glass-action:hover,
   color: #000000 !important;
 }
 
-/* ── SpoPlayer Signature Design System ── */
+/* â”€â”€ SpoPlayer Signature Design System â”€â”€ */
 .spoplayer-glow {
   box-shadow: 0 0 24px -4px var(--accent-primary, #00f59b);
 }
@@ -335,6 +359,19 @@ button.apple-glass-action:hover,
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(0, 245, 155, 0.12);
+}
+.spoplayer-glass-panel {
+  background: rgba(14, 22, 18, 0.85);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.spoplayer-press {
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.12s ease;
+}
+.spoplayer-press:active {
+  transform: scale(0.95);
 }
 .spoplayer-card {
   position: relative;

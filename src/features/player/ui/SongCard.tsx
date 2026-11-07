@@ -122,11 +122,11 @@ function SongCard({
     <div
       className={`group w-full flex items-center justify-between rounded-xl ${paddingClass} outline-none transition-all duration-200 ease-out ${
         isCurrent
-          ? "bg-[var(--accent-primary,#00f59b)]/[0.08] border border-[var(--accent-primary,#00f59b)]/25 shadow-[0_0_16px_var(--bg-toolbox-active)]"
+          ? "bg-[var(--accent-primary,#00f59b)]/[0.09] border border-[var(--accent-primary,#00f59b)]/30 shadow-[0_0_20px_rgba(0,245,155,0.12)]"
           : "border border-transparent"
       } ${
         className ?? ""
-      } ${onPlay ? "cursor-pointer" : ""} ${onPlay && !className?.includes("hover:bg-") && !isCurrent ? "hover:bg-border-alpha-14 hover:border-white/[0.06]" : ""}`}
+      } ${onPlay ? "cursor-pointer" : ""} ${onPlay && !className?.includes("hover:bg-") && !isCurrent ? "hover:bg-border-alpha-14 hover:border-white/[0.06] hover:translate-x-[2px]" : ""}`}
       onClick={handleClick}
       onPointerDown={(e) => {
         if (clickTimerRef.current) {
@@ -254,7 +254,7 @@ function SongCard({
       <div className="flex items-center shrink-0 ml-[16px] gap-[12px]">
         {isDownloaded && (
           <span
-            title="Descargada para escuchar sin conexión"
+            title="Descargada para escuchar sin conexiÃ³n"
             className="flex items-center justify-center text-emerald-400 shrink-0"
           >
             <CheckCircleFill size={15} />

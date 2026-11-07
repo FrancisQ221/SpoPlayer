@@ -36,8 +36,10 @@ export const EqualizerModal = memo(function EqualizerModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg rounded-3xl bg-[#0f1412]/95 border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.85)] p-6 overflow-hidden flex flex-col gap-6"
+          className="relative w-full max-w-lg rounded-3xl bg-[#0e1612]/95 backdrop-blur-2xl border border-white/10 dark:border-[var(--accent-primary,#00f59b)]/20 shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 overflow-hidden flex flex-col gap-6"
         >
+          {/* Ambient Corner Glow */}
+          <div className="pointer-events-none absolute -top-16 -right-16 w-44 h-44 rounded-full bg-[var(--accent-primary,#00f59b)]/10 blur-3xl" />
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
