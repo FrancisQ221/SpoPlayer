@@ -8,7 +8,7 @@ export interface TraySettings {
 }
 
 const DEFAULT_SETTINGS: TraySettings = {
-  closeToTray: true,
+  closeToTray: false,
   minimizeToTray: false,
   notifyOnTrackChange: true,
 };

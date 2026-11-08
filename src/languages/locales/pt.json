@@ -479,7 +479,9 @@
       "privacy": "Privacidade"
     },
     "playback": {
-      "description": "Comportamento da fila, ações de clique e saída de áudio."
+      "description": "Comportamento da fila, ações de clique e saída de áudio.",
+      "crossfade": "Crossfade de faixas",
+      "crossfade_desc": "Transição suave entre o final de uma música e o início da próxima sem silêncio."
     },
     "shortcuts": {
       "description": "Personalize os atalhos globais do sistema e os do player.",
@@ -567,6 +569,10 @@
       "always_on_top": {
         "title": "Sempre no topo",
         "description": "Mantém o overlay flutuante acima das outras janelas."
+      },
+      "enable": {
+        "title": "Ativar overlay",
+        "description": "Exibe um mini player flutuante acima das outras janelas."
       }
     },
     "discord": {

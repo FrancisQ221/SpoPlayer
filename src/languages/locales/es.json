@@ -500,7 +500,9 @@
       "shortcuts": "Atajos"
     },
     "playback": {
-      "description": "Comportamiento de la cola, acciones de clic y salida de audio."
+      "description": "Comportamiento de la cola, acciones de clic y salida de audio.",
+      "crossfade": "Fundido entre canciones (Crossfade)",
+      "crossfade_desc": "Mezcla suavemente el final de una pista con el inicio de la siguiente sin silencios."
     },
     "overlay": {
       "description": "Comportamiento del reproductor flotante, atajo global y posición.",
@@ -530,6 +532,10 @@
       "always_on_top": {
         "title": "Siempre encima",
         "description": "Mantiene el reproductor flotando por encima de otras ventanas."
+      },
+      "enable": {
+        "title": "Activar superposición",
+        "description": "Muestra un reproductor flotante en miniatura sobre otras ventanas."
       }
     },
     "discord": {

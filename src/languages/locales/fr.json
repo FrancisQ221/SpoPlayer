@@ -481,7 +481,9 @@
       "discord": "Discord RPC"
     },
     "playback": {
-      "description": "Comportement de la file d'attente, actions au clic et sortie audio."
+      "description": "Comportement de la file d'attente, actions au clic et sortie audio.",
+      "crossfade": "Fondu enchaîné (Crossfade)",
+      "crossfade_desc": "Enchaîne en douceur la fin d'un morceau avec le début du suivant sans silence."
     },
     "shortcuts": {
       "description": "Personnalisez les raccourcis clavier globaux et ceux du lecteur.",
@@ -569,6 +571,10 @@
       "always_on_top": {
         "title": "Toujours au premier plan",
         "description": "Garde l'overlay au-dessus des autres fenêtres."
+      },
+      "enable": {
+        "title": "Activer l'overlay",
+        "description": "Affiche un lecteur miniature flottant au-dessus des autres fenêtres."
       }
     },
     "customization": {

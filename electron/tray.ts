@@ -10,10 +10,10 @@ export interface TraySettings {
 }
 
 const DEFAULT_SETTINGS: TraySettings = {
-  closeToTray: true,
+  closeToTray: false,
   minimizeToTray: false,
   notifyOnTrackChange: true,
-  hasSeenTrayNotice: false,
+  hasSeenTrayNotice: true,
 };
 
 function loadTraySettings(userDataPath: string): TraySettings {
@@ -79,7 +79,7 @@ export class TrayManager {
   }
 
   public isCloseToTray(): boolean {
-    return this.settings.closeToTray;
+    return false;
   }
 
   public isMinimizeToTray(): boolean {
@@ -316,14 +316,6 @@ export class TrayManager {
       {
         label: "Opciones de la bandeja",
         submenu: [
-          {
-            label: "Minimizar a la bandeja al cerrar (X)",
-            type: "checkbox",
-            checked: this.settings.closeToTray,
-            click: (item) => {
-              this.updateSettings({ closeToTray: item.checked });
-            },
-          },
           {
             label: "Minimizar a la bandeja al minimizar (-)",
             type: "checkbox",

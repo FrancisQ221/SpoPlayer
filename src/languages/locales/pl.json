@@ -483,7 +483,9 @@
       "discord": "Discord RPC"
     },
     "playback": {
-      "description": "Działanie kolejki, akcje po kliknięciu i wyjście audio."
+      "description": "Działanie kolejki, akcje po kliknięciu i wyjście audio.",
+      "crossfade": "Płynne przejścia (Crossfade)",
+      "crossfade_desc": "Płynnie łączy koniec utworu z początkiem następnego bez ciszy."
     },
     "shortcuts": {
       "description": "Dostosuj globalne skróty systemowe i skróty odtwarzacza.",
@@ -571,6 +573,10 @@
       "always_on_top": {
         "title": "Zawsze na wierzchu",
         "description": "Utrzymuje nakładkę nad innymi oknami."
+      },
+      "enable": {
+        "title": "Włącz nakładkę",
+        "description": "Wyświetla pływający miniodtwarzacz nad innymi oknami."
       }
     },
     "customization": {

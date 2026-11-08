@@ -475,7 +475,9 @@
       "discord": "Discord RPC"
     },
     "playback": {
-      "description": "Verhalten der Warteschlange, Klickaktionen und Audioausgabe."
+      "description": "Verhalten der Warteschlange, Klickaktionen und Audioausgabe.",
+      "crossfade": "Titel überblenden (Crossfade)",
+      "crossfade_desc": "Sanfter Übergang zwischen Titeln ohne Stille."
     },
     "overlay": {
       "description": "Verhalten des Desktop-Overlays, globale Tastenkombination und Positionseinstellungen.",
@@ -505,6 +507,10 @@
       "always_on_top": {
         "title": "Immer im Vordergrund",
         "description": "Hält das Overlay über anderen Fenstern."
+      },
+      "enable": {
+        "title": "Overlay aktivieren",
+        "description": "Zeigt einen schwebenden Mini-Player über anderen Fenstern an."
       }
     },
     "customization": {

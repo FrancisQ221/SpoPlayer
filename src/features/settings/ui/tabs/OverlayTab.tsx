@@ -1,8 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "@/languages";
-import {
-  useOverlaySettingsStore,
-} from "@/features/overlay";
+import { useOverlaySettingsStore } from "@/features/overlay";
 import { ToggleSwitch } from "@/shared/ui";
 import { SettingRow, SettingSection, SegmentedControl } from "../controls";
 import { useTraySettingsStore } from "@/features/tray";
@@ -37,8 +35,6 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
   const alwaysOnTop = useOverlaySettingsStore((s) => s.alwaysOnTop);
   const setAlwaysOnTop = useOverlaySettingsStore((s) => s.setAlwaysOnTop);
 
-  const closeToTray = useTraySettingsStore((s) => s.closeToTray);
-  const setCloseToTray = useTraySettingsStore((s) => s.setCloseToTray);
   const minimizeToTray = useTraySettingsStore((s) => s.minimizeToTray);
   const setMinimizeToTray = useTraySettingsStore((s) => s.setMinimizeToTray);
   const notifyOnTrackChange = useTraySettingsStore((s) => s.notifyOnTrackChange);
@@ -48,13 +44,13 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
     <div className="flex flex-col gap-[16px]">
       <SettingSection>
         <SettingRow
-          title={t("settings.overlay.enable.title") || "Enable overlay"}
+          title={t("settings.overlay.enabled.title") || "Activar superposición"}
           description={
-            t("settings.overlay.enable.description") ||
-            "Show floating desktop overlay when SpoPlayer is not focused."
+            t("settings.overlay.enabled.description") ||
+            "Muestra un reproductor flotante en miniatura sobre otras ventanas."
           }
-          titleKey="settings.overlay.enable.title"
-          descKey="settings.overlay.enable.description"
+          titleKey="settings.overlay.enabled.title"
+          descKey="settings.overlay.enabled.description"
           searchQuery={searchQuery}
           control={
             <ToggleSwitch
@@ -130,20 +126,6 @@ export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
 
       <SettingSection label="Bandeja del sistema">
         <div className="flex flex-col gap-4">
-          <SettingRow
-            title="Minimizar a la bandeja al cerrar (X)"
-            description="Al hacer clic en el botón cerrar, ocultar SpoPlayer en la bandeja del sistema para seguir escuchando en lugar de salir."
-            titleKey="Minimizar a la bandeja al cerrar"
-            descKey="ocultar SpoPlayer en la bandeja del sistema"
-            searchQuery={searchQuery}
-            control={
-              <ToggleSwitch
-                checked={closeToTray}
-                onChange={setCloseToTray}
-              />
-            }
-          />
-
           <SettingRow
             title="Minimizar a la bandeja al minimizar (-)"
             description="Al minimizar la ventana, ocultarla de la barra de tareas y dejarla disponible únicamente en la bandeja del sistema."

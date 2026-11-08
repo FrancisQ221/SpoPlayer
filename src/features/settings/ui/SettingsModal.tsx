@@ -48,6 +48,7 @@ const SETTING_ITEMS: { tabId: TabId; titleKey: string; descKey?: string }[] = [
   { tabId: "Playback", titleKey: "settings.track_double_click.title", descKey: "settings.track_double_click.description" },
   { tabId: "Playback", titleKey: "settings.default_playback_context.title", descKey: "settings.default_playback_context.description" },
   { tabId: "Playback", titleKey: "settings.audio.pause_on_device_change.title", descKey: "settings.audio.pause_on_device_change.description" },
+  { tabId: "Playback", titleKey: "settings.playback.crossfade", descKey: "settings.playback.crossfade_desc" },
 
   // Shortcuts
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.main_app_section", descKey: "settings.shortcuts.main_app_desc" },
@@ -62,11 +63,10 @@ const SETTING_ITEMS: { tabId: TabId; titleKey: string; descKey?: string }[] = [
   { tabId: "Shortcuts", titleKey: "settings.shortcuts.toggle_lyrics_mode", descKey: "settings.shortcuts.toggle_lyrics_mode_desc" },
 
   // Overlay & Tray
+  { tabId: "Overlay", titleKey: "settings.overlay.enabled.title", descKey: "settings.overlay.enabled.description" },
   { tabId: "Overlay", titleKey: "settings.overlay.position.title", descKey: "settings.overlay.position.description" },
-  { tabId: "Overlay", titleKey: "settings.overlay.show_lyrics.title", descKey: "settings.overlay.show_lyrics.description" },
   { tabId: "Overlay", titleKey: "settings.overlay.auto_show_on_minimize.title", descKey: "settings.overlay.auto_show_on_minimize.description" },
   { tabId: "Overlay", titleKey: "settings.overlay.always_on_top.title", descKey: "settings.overlay.always_on_top.description" },
-  { tabId: "Overlay", titleKey: "Minimizar a la bandeja al cerrar", descKey: "ocultar SpoPlayer en la bandeja del sistema" },
   { tabId: "Overlay", titleKey: "Minimizar a la bandeja al minimizar", descKey: "ocultarla de la barra de tareas y dejarla en la bandeja" },
   { tabId: "Overlay", titleKey: "Notificaciones de canción", descKey: "notificación nativa del sistema cuando comience una canción" },
 

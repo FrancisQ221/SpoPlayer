@@ -357,16 +357,9 @@ function createWindow() {
     flushPendingDeeplink();
   });
 
-  mainWindow.on("close", (event) => {
+  mainWindow.on("close", () => {
     if (!shutdown.isQuitting()) {
-      if (trayManager?.isCloseToTray()) {
-        event.preventDefault();
-        mainWindow?.hide();
-        trayManager?.updateMenu();
-        trayManager?.notifyFirstClose();
-      } else {
-        shutdown.quit();
-      }
+      shutdown.quit();
     }
   });
 

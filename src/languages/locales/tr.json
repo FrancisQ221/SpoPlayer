@@ -479,7 +479,9 @@
       "discord": "Discord RPC"
     },
     "playback": {
-      "description": "Sıra davranışı, tıklama eylemleri ve ses çıkışı."
+      "description": "Sıra davranışı, tıklama eylemleri ve ses çıkışı.",
+      "crossfade": "Şarkılar arası geçiş (Crossfade)",
+      "crossfade_desc": "Parçalar arasında boşluk bırakmadan yumuşak geçiş yapar."
     },
     "shortcuts": {
       "description": "Sistem genelindeki ve oynatıcıdaki klavye kısayollarını özelleştir.",
@@ -567,6 +569,10 @@
       "always_on_top": {
         "title": "Her zaman üstte",
         "description": "Katmanı diğer pencerelerin üstünde tutar."
+      },
+      "enable": {
+        "title": "Katmanı etkinleştir",
+        "description": "Diğer pencerelerin üstünde yüzen küçük bir oynatıcı gösterir."
       }
     },
     "customization": {

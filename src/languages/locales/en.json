@@ -496,7 +496,9 @@
       "privacy": "Privacy"
     },
     "playback": {
-      "description": "Queue behavior, click actions and audio output."
+      "description": "Queue behavior, click actions and audio output.",
+      "crossfade": "Crossfade tracks",
+      "crossfade_desc": "Smoothly fade out the current track and fade in the next track without silence."
     },
     "shortcuts": {
       "description": "Customize global system-wide and player keyboard shortcuts.",
@@ -592,6 +594,10 @@
       "always_on_top": {
         "title": "Always on top",
         "description": "Keep the overlay floating above other windows."
+      },
+      "enable": {
+        "title": "Enable overlay",
+        "description": "Show a floating miniature player above other windows."
       }
     },
     "discord": {

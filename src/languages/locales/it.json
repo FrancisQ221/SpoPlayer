@@ -479,7 +479,9 @@
       "discord": "Discord RPC"
     },
     "playback": {
-      "description": "Comportamento della coda, azioni al clic e uscita audio."
+      "description": "Comportamento della coda, azioni al clic e uscita audio.",
+      "crossfade": "Dissolvenza incrociata (Crossfade)",
+      "crossfade_desc": "Sfuma dolcemente tra la fine di un brano e l'inizio del successivo senza interruzioni."
     },
     "shortcuts": {
       "description": "Personalizza le scorciatoie da tastiera globali e del player.",
@@ -567,6 +569,10 @@
       "always_on_top": {
         "title": "Sempre in primo piano",
         "description": "Mantieni l'overlay sopra le altre finestre."
+      },
+      "enable": {
+        "title": "Attiva overlay",
+        "description": "Mostra un player in miniatura mobile sopra le altre finestre."
       }
     },
     "customization": {
