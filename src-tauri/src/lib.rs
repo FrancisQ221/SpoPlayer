@@ -94,11 +94,43 @@ async fn native_fetch(
     })
 }
 
+#[tauri::command]
+fn app_minimize(window: tauri::WebviewWindow) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+fn app_toggle_maximize(window: tauri::WebviewWindow) {
+    if let Ok(is_max) = window.is_maximized() {
+        if is_max {
+            let _ = window.unmaximize();
+        } else {
+            let _ = window.maximize();
+        }
+    }
+}
+
+#[tauri::command]
+fn app_close(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
+#[tauri::command]
+fn app_is_maximized(window: tauri::WebviewWindow) -> bool {
+    window.is_maximized().unwrap_or(false)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        // Register native fetch command
-        .invoke_handler(tauri::generate_handler![native_fetch])
+        // Register native fetch and window management commands
+        .invoke_handler(tauri::generate_handler![
+            native_fetch,
+            app_minimize,
+            app_toggle_maximize,
+            app_close,
+            app_is_maximized
+        ])
         // Single instance plugin: if SpoPlayer is already running, focus existing window
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {

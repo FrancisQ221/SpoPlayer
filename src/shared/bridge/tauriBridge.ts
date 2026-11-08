@@ -123,17 +123,17 @@ export function initTauriBridge(): void {
     isMacOS: false,
     isHyprland: false,
 
-    // Window controls
+    // Window controls backed directly by native Rust commands
     minimize: async () => {
       try {
-        await appWindow?.minimize();
+        await invoke("app_minimize");
       } catch (err) {
         console.warn("[TauriBridge] minimize error:", err);
       }
     },
     toggleMaximize: async () => {
       try {
-        await appWindow?.toggleMaximize();
+        await invoke("app_toggle_maximize");
       } catch (err) {
         console.warn("[TauriBridge] toggleMaximize error:", err);
       }
@@ -148,14 +148,14 @@ export function initTauriBridge(): void {
     },
     close: async () => {
       try {
-        await appWindow?.close();
+        await invoke("app_close");
       } catch (err) {
         console.warn("[TauriBridge] close error:", err);
       }
     },
     isMaximized: async () => {
       try {
-        return (await appWindow?.isMaximized()) ?? false;
+        return (await invoke<boolean>("app_is_maximized")) ?? false;
       } catch {
         return false;
       }
@@ -169,13 +169,7 @@ export function initTauriBridge(): void {
     },
 
     // Window dragging (frameless window drag)
-    dragStart: async () => {
-      try {
-        await appWindow?.startDragging();
-      } catch (err) {
-        console.warn("[TauriBridge] startDragging error:", err);
-      }
-    },
+    dragStart: () => {},
     dragMove: () => {},
     dragEnd: () => {},
 
