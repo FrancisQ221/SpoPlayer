@@ -1,7 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { initGlobalErrorHandlers } from "@/shared/utils/globalErrorHandlers";
+import { initTauriBridge } from "@/shared/bridge/tauriBridge";
 
+initTauriBridge();
 initGlobalErrorHandlers();
 
 const isOverlay = window.location.hash.startsWith("#/overlay");

@@ -24,7 +24,10 @@
     "electron:build:win": "tsc -b && vite build && electron-builder --win --publish never",
     "dist:win": "tsc -b && vite build && electron-builder --win --publish never",
     "electron:build:mac": "tsc -b && vite build && electron-builder --mac",
-    "native:build": "pnpm dlx node-gyp@11 rebuild --directory native/snap-preview && node scripts/verify-native-addon.cjs"
+    "native:build": "pnpm dlx node-gyp@11 rebuild --directory native/snap-preview && node scripts/verify-native-addon.cjs",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "build": {
     "appId": "com.spoplayer.app",
@@ -114,6 +117,7 @@
     "@solar-icons/react": "^1.1.1",
     "@supabase/supabase-js": "^2.118.0",
     "@tanstack/react-virtual": "^3.13.23",
+    "@tauri-apps/api": "^2.12.4",
     "@xhayper/discord-rpc": "^1.5.1",
     "bgutils-js": "4.0.3",
     "electron-updater": "^6.8.9",
@@ -135,6 +139,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@tauri-apps/cli": "^2.12.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
