@@ -1,4 +1,5 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
 
 /**
  * Returns true if the application is running inside a Tauri WebView.
@@ -12,6 +13,90 @@ export function isTauri(): boolean {
   );
 }
 
+function setupNativeFetchInterceptor(): void {
+  if (typeof window === "undefined") return;
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    let url: string;
+    if (typeof input === "string") {
+      url = input;
+    } else if (input instanceof URL) {
+      url = input.href;
+    } else if (input && typeof (input as Request).url === "string") {
+      url = (input as Request).url;
+    } else {
+      url = String(input);
+    }
+
+    // Route YouTube Music & Apple Music requests through native Rust to bypass CORS and set Origin headers
+    const isSpecialTarget =
+      url.includes("youtube.com") ||
+      url.includes("googlevideo.com") ||
+      url.includes("music.apple.com");
+
+    if (!isSpecialTarget) {
+      return originalFetch(input, init);
+    }
+
+    try {
+      const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+      const headers: Record<string, string> = {};
+
+      const inputHeaders = init?.headers || (input instanceof Request ? input.headers : undefined);
+      if (inputHeaders) {
+        if (inputHeaders instanceof Headers) {
+          inputHeaders.forEach((v, k) => {
+            headers[k] = v;
+          });
+        } else if (Array.isArray(inputHeaders)) {
+          for (const [k, v] of inputHeaders) {
+            headers[k] = v;
+          }
+        } else {
+          Object.assign(headers, inputHeaders);
+        }
+      }
+
+      let bodyStr: string | undefined;
+      const rawBody = init?.body;
+      if (rawBody) {
+        if (typeof rawBody === "string") {
+          bodyStr = rawBody;
+        } else if (rawBody instanceof URLSearchParams) {
+          bodyStr = rawBody.toString();
+        }
+      }
+
+      const res: {
+        status: number;
+        status_text: string;
+        headers: Record<string, string>;
+        body: string;
+      } = await invoke("native_fetch", {
+        url,
+        method,
+        headers,
+        body: bodyStr,
+      });
+
+      const responseHeaders = new Headers();
+      for (const [k, v] of Object.entries(res.headers)) {
+        responseHeaders.set(k, v);
+      }
+
+      return new Response(res.body, {
+        status: res.status,
+        statusText: res.status_text,
+        headers: responseHeaders,
+      });
+    } catch (err) {
+      console.warn("[TauriBridge] Native fetch failed, falling back to original fetch:", err);
+      return originalFetch(input, init);
+    }
+  };
+}
+
 /**
  * Compatibility Bridge: Exposes `window.spoplayerElectron` using Tauri APIs
  * with an infallible Proxy fallback so that ANY Electron call made by React
@@ -21,6 +106,8 @@ export function initTauriBridge(): void {
   if (typeof window === "undefined") return;
   // If Electron already provided its native preload bridge, do not overwrite
   if ((window as any).spoplayerElectron && !isTauri()) return;
+
+  setupNativeFetchInterceptor();
 
   let appWindow: any = null;
   try {
