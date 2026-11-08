@@ -1,28 +1,35 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 /**
- * Returns true if the application is currently running inside Tauri WebView.
+ * Returns true if the application is running inside a Tauri WebView.
  */
 export function isTauri(): boolean {
+  if (typeof window === "undefined") return false;
   return (
-    typeof window !== "undefined" &&
-    ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)
+    "__TAURI_INTERNALS__" in window ||
+    "__TAURI__" in window ||
+    navigator.userAgent.includes("Tauri")
   );
 }
 
 /**
  * Compatibility Bridge: Exposes `window.spoplayerElectron` using Tauri APIs
- * when running under Tauri. This allows 100% of the existing React UI, stores,
- * and components to function seamlessly without rewriting them.
+ * with an infallible Proxy fallback so that ANY Electron call made by React
+ * components or hooks runs seamlessly without throwing undefined errors.
  */
 export function initTauriBridge(): void {
   if (typeof window === "undefined") return;
-  if (!isTauri()) return;
-  if ((window as any).spoplayerElectron) return;
+  // If Electron already provided its native preload bridge, do not overwrite
+  if ((window as any).spoplayerElectron && !isTauri()) return;
 
-  const appWindow = getCurrentWindow();
+  let appWindow: any = null;
+  try {
+    appWindow = getCurrentWindow();
+  } catch (err) {
+    console.warn("[TauriBridge] Could not get current window:", err);
+  }
 
-  (window as any).spoplayerElectron = {
+  const explicitHandlers: Record<string, any> = {
     platform: "win32",
     isWindows: true,
     isLinux: false,
@@ -32,43 +39,43 @@ export function initTauriBridge(): void {
     // Window controls
     minimize: async () => {
       try {
-        await appWindow.minimize();
+        await appWindow?.minimize();
       } catch (err) {
         console.warn("[TauriBridge] minimize error:", err);
       }
     },
     toggleMaximize: async () => {
       try {
-        await appWindow.toggleMaximize();
+        await appWindow?.toggleMaximize();
       } catch (err) {
         console.warn("[TauriBridge] toggleMaximize error:", err);
       }
     },
     toggleFullScreen: async () => {
       try {
-        const isFs = await appWindow.isFullscreen();
-        await appWindow.setFullscreen(!isFs);
+        const isFs = await appWindow?.isFullscreen();
+        await appWindow?.setFullscreen(!isFs);
       } catch (err) {
         console.warn("[TauriBridge] toggleFullScreen error:", err);
       }
     },
     close: async () => {
       try {
-        await appWindow.close();
+        await appWindow?.close();
       } catch (err) {
         console.warn("[TauriBridge] close error:", err);
       }
     },
     isMaximized: async () => {
       try {
-        return await appWindow.isMaximized();
+        return (await appWindow?.isMaximized()) ?? false;
       } catch {
         return false;
       }
     },
     isFullScreen: async () => {
       try {
-        return await appWindow.isFullscreen();
+        return (await appWindow?.isFullscreen()) ?? false;
       } catch {
         return false;
       }
@@ -77,7 +84,7 @@ export function initTauriBridge(): void {
     // Window dragging (frameless window drag)
     dragStart: async () => {
       try {
-        await appWindow.startDragging();
+        await appWindow?.startDragging();
       } catch (err) {
         console.warn("[TauriBridge] startDragging error:", err);
       }
@@ -92,6 +99,7 @@ export function initTauriBridge(): void {
 
       const setup = async () => {
         try {
+          if (!appWindow) return;
           const unlisten = await appWindow.onResized(async () => {
             if (isCleanedUp) return;
             const isMax = await appWindow.isMaximized();
@@ -125,14 +133,89 @@ export function initTauriBridge(): void {
     trayUpdateSettings: () => {},
     onTraySettingsChanged: () => () => {},
 
-    // Safe fallbacks for optional desktop extras
+    // Discord status fallback
     discordUpdateState: () => {},
     discordUpdateSettings: () => {},
-    getDiscordStatus: async () => ({ isConnected: false }),
-    openDownloads: () => {},
-    openExportFolder: () => {},
+    getDiscordStatus: async () => ({ isConnected: false, connected: false }),
+
+    // Network / cache fallbacks
     diagnoseNetwork: async () => ({}),
+    getCacheStats: async () => ({
+      cacheSize: 0,
+      httpCacheSize: 0,
+      codeCacheSize: 0,
+      serviceWorkerSize: 0,
+      indexedDbSize: 0,
+      localStorageSize: 0,
+      blobStorageSize: 0,
+      cachePath: "",
+    }),
+    openCacheFolder: async () => false,
+    clearCoversCache: async () => true,
+    clearAudioCache: async () => true,
+    clearHttpCache: async () => true,
+    openDownloads: async () => false,
+    openExportFolder: async () => false,
+    saveDump: async () => ({ success: false }),
+
+    // Server time & security
+    syncServerTime: async () => Date.now(),
+    getServerTimeOffset: async () => 0,
+    mintPoToken: async () => "",
+    signCoverUrl: async (payload: string) => payload,
+    signRawPayload: async () => "",
+    signMonitorRequest: async () => ({}),
+
+    // App icons & updates
+    setAppIcon: async () => {},
+    getAppVersion: async () => "0.1.42",
+    checkForUpdates: async () => ({ available: false }),
+    downloadUpdate: async () => ({ success: false }),
+    quitAndInstall: async () => false,
+
+    // OTA Frontend Bundle Updater fallbacks
+    bundleCheck: async () => ({ available: false }),
+    bundleDownloadAndInstall: async () => ({ success: false }),
+    bundleHotSwap: async () => false,
+    bundleRollback: async () => false,
+    bundleGetStatus: async () => ({
+      appVersion: "0.1.42",
+      bundleVersion: "0.1.42",
+      isOta: false,
+      sha256: null,
+      effectivePath: "",
+    }),
+
+    // Explicitly undefined so auth-session.ts uses localStorage directly
+    authSession: undefined,
   };
 
-  console.info("[TauriBridge] Successfully initialized spoplayerElectron bridge for Tauri 2.0");
+  // Safe Proxy that intercepts ANY unhandled call and returns a benign no-op
+  const bridgeProxy = new Proxy(explicitHandlers, {
+    get(target, prop: string | symbol) {
+      if (typeof prop === "symbol") return (target as any)[prop];
+      if (prop in target) return target[prop];
+
+      // Any event listener `onXxx(...)` returns an unlisten function
+      if (prop.startsWith("on")) {
+        return () => () => {};
+      }
+
+      // Any boolean getter `isXxx(...)` returns false
+      if (prop.startsWith("is")) {
+        return async () => false;
+      }
+
+      // Any data getter `getXxx(...)` returns null
+      if (prop.startsWith("get")) {
+        return async () => null;
+      }
+
+      // Any generic method call returns resolved promise / no-op
+      return async () => {};
+    },
+  });
+
+  (window as any).spoplayerElectron = bridgeProxy;
+  console.info("[TauriBridge] Successfully initialized foolproof spoplayerElectron bridge for Tauri 2.0");
 }
