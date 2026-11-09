@@ -1,5 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 /**
  * Returns true if the application is running inside a Tauri WebView.
@@ -97,6 +98,60 @@ function setupNativeFetchInterceptor(): void {
   };
 }
 
+function setupThumbarListener(): void {
+  if (typeof window === "undefined") return;
+
+  // Listen to Windows Taskbar Thumbnail Toolbar clicks
+  void listen("thumbar-previous", async () => {
+    try {
+      const { playerEngine } = await import("@/features/player");
+      void playerEngine.skipPrevious();
+    } catch (err) {
+      console.warn("[Thumbar] skipPrevious error:", err);
+    }
+  });
+
+  void listen("thumbar-toggle", async () => {
+    try {
+      const { playerEngine } = await import("@/features/player");
+      void playerEngine.togglePlayPause();
+    } catch (err) {
+      console.warn("[Thumbar] togglePlayPause error:", err);
+    }
+  });
+
+  void listen("thumbar-next", async () => {
+    try {
+      const { playerEngine } = await import("@/features/player");
+      void playerEngine.skipNext(true);
+    } catch (err) {
+      console.warn("[Thumbar] skipNext error:", err);
+    }
+  });
+
+  // Hardware media keys & Windows SMTC
+  if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+    try {
+      navigator.mediaSession.setActionHandler("play", async () => {
+        const { playerEngine } = await import("@/features/player");
+        void playerEngine.resume();
+      });
+      navigator.mediaSession.setActionHandler("pause", async () => {
+        const { playerEngine } = await import("@/features/player");
+        playerEngine.pause();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", async () => {
+        const { playerEngine } = await import("@/features/player");
+        void playerEngine.skipPrevious();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", async () => {
+        const { playerEngine } = await import("@/features/player");
+        void playerEngine.skipNext(true);
+      });
+    } catch {}
+  }
+}
+
 /**
  * Compatibility Bridge: Exposes `window.spoplayerElectron` using Tauri APIs
  * with an infallible Proxy fallback so that ANY Electron call made by React
@@ -108,6 +163,7 @@ export function initTauriBridge(): void {
   if ((window as any).spoplayerElectron && !isTauri()) return;
 
   setupNativeFetchInterceptor();
+  setupThumbarListener();
 
   let appWindow: any = null;
   try {
@@ -266,6 +322,25 @@ export function initTauriBridge(): void {
       sha256: null,
       effectivePath: "",
     }),
+
+    // Taskbar thumbnail toolbar & MediaSession state sync
+    touchbarUpdateState: (payload: any) => {
+      const isPlaying = payload?.status === "playing";
+      invoke("thumbar_update_state", { playing: isPlaying }).catch(() => {});
+
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+        if (payload?.track) {
+          const t = payload.track;
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: t.title || "SpoPlayer",
+            artist: Array.isArray(t.artists) ? t.artists.join(", ") : t.artists || "",
+            album: t.album?.title || t.album || "",
+            artwork: t.coverUrl ? [{ src: t.coverUrl, sizes: "512x512", type: "image/png" }] : [],
+          });
+        }
+      }
+    },
 
     // Explicitly undefined so auth-session.ts uses localStorage directly
     authSession: undefined,

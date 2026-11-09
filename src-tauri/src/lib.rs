@@ -3,6 +3,7 @@ use tauri::{
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     Manager,
 };
+use tauri_plugin_thumbar::{Button, ButtonUpdate, ThumbarExt};
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct HttpResponse {
@@ -120,16 +121,33 @@ fn app_is_maximized(window: tauri::WebviewWindow) -> bool {
     window.is_maximized().unwrap_or(false)
 }
 
+#[tauri::command]
+fn thumbar_update_state(app: tauri::AppHandle, playing: bool) {
+    if let Some(window) = app.get_webview_window("main") {
+        let (icon, tooltip) = if playing {
+            ("icons/thumbar/pause.ico", "Pausar")
+        } else {
+            ("icons/thumbar/play.ico", "Reproducir")
+        };
+        let _ = app.thumbar().update(
+            &window,
+            ButtonUpdate::new(2).icon(icon).tooltip(tooltip),
+        );
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_thumbar::init())
         // Register native fetch and window management commands
         .invoke_handler(tauri::generate_handler![
             native_fetch,
             app_minimize,
             app_toggle_maximize,
             app_close,
-            app_is_maximized
+            app_is_maximized,
+            thumbar_update_state
         ])
         // Single instance plugin: if SpoPlayer is already running, focus existing window
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -140,6 +158,25 @@ pub fn run() {
             }
         }))
         .setup(|app| {
+            // Initialize Windows Taskbar Thumbnail Toolbar (Thumbar)
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = app.thumbar().initialize(
+                    &window,
+                    vec![
+                        Button::new(1, "icons/thumbar/previous.ico")
+                            .tooltip("Anterior")
+                            .event("thumbar-previous"),
+                        Button::new(2, "icons/thumbar/play.ico")
+                            .tooltip("Reproducir")
+                            .event("thumbar-toggle"),
+                        Button::new(3, "icons/thumbar/next.ico")
+                            .tooltip("Siguiente")
+                            .event("thumbar-next"),
+                    ],
+                    None,
+                );
+            }
+
             // Build the Native System Tray Menu
             let show_i = MenuItem::with_id(app, "show", "Mostrar SpoPlayer", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Salir de SpoPlayer", true, None::<&str>)?;
