@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { isTauri } from "@/shared/bridge/tauriBridge";
 
 export interface WindowDragOptions {
   /**
@@ -52,9 +51,9 @@ export function resetWindowDragTimeForTests(): void {
 export const NATIVE_WINDOW_DRAG_CLASS = "native-window-drag";
 const WINDOW_DRAG_STRIP_ID = "window-drag-strip";
 
-// wayland ignores client-side setPosition, so linux and tauri hand the drag to the compositor via css app-region
+// wayland ignores client-side setPosition, so linux hands the drag to the compositor via css app-region
 function usesNativeWindowDrag(): boolean {
-  return window.spoplayerElectron?.platform === "linux" || isTauri();
+  return window.spoplayerElectron?.platform === "linux";
 }
 
 // app-region only applies to real boxes, so the top drag strip the js path
@@ -70,7 +69,6 @@ function enableNativeWindowDrag(topAreaHeight: number): () => void {
     strip = document.createElement("div");
     strip.id = WINDOW_DRAG_STRIP_ID;
     strip.setAttribute("aria-hidden", "true");
-    strip.setAttribute("data-tauri-drag-region", "");
     document.body.prepend(strip);
   }
   strip.style.height = `${topAreaHeight}px`;
