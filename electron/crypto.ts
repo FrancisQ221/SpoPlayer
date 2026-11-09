@@ -75,7 +75,17 @@ function getWasmExports(): WasmSignerExports {
   const wasmBuffer = Buffer.from(SIGNER_WASM_BASE64, "base64");
   const wasmModule = new WebAssembly.Module(wasmBuffer);
   const wasmInstance = new WebAssembly.Instance(wasmModule, {});
-  wasmExportsInstance = wasmInstance.exports as unknown as WasmSignerExports;
+    const raw = wasmInstance.exports as Record<string, any>;
+  wasmExportsInstance = {
+    spoplayer_alloc: raw.spoplayer_alloc ?? raw.liner_alloc,
+    spoplayer_dealloc: raw.spoplayer_dealloc ?? raw.liner_dealloc,
+    spoplayer_get_result_ptr: raw.spoplayer_get_result_ptr ?? raw.liner_get_result_ptr,
+    spoplayer_get_result_len: raw.spoplayer_get_result_len ?? raw.liner_get_result_len,
+    spoplayer_sign_cover_url: raw.spoplayer_sign_cover_url ?? raw.liner_sign_cover_url,
+    spoplayer_sign_monitor_request: raw.spoplayer_sign_monitor_request ?? raw.liner_sign_monitor_request,
+    spoplayer_sign_raw_payload: raw.spoplayer_sign_raw_payload ?? raw.liner_sign_raw_payload,
+    memory: raw.memory,
+  };
   return wasmExportsInstance;
 }
 
@@ -176,5 +186,7 @@ export function signRawPayload(payload: Buffer | Uint8Array): string {
     wasm.spoplayer_dealloc(ptr, bytes.length);
   }
 }
+
+
 
 
