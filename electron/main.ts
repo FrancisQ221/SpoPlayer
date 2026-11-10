@@ -1578,7 +1578,10 @@ if (!gotTheLock) {
       });
     });
 
+    let isDownloadingUpdate = false;
+
     autoUpdater.on("download-progress", (progressObj) => {
+      isDownloadingUpdate = true;
       mainWindow?.webContents.send("updater:download-progress", {
         percent: Math.round(progressObj.percent * 10) / 10,
         transferred: progressObj.transferred,
@@ -1588,16 +1591,21 @@ if (!gotTheLock) {
     });
 
     autoUpdater.on("update-downloaded", (info) => {
+      isDownloadingUpdate = false;
       mainWindow?.webContents.send("updater:update-downloaded", {
         version: info.version,
       });
     });
 
     autoUpdater.on("error", (err) => {
-      console.error("\x1b[31m updater \x1b[0m autoUpdater error:", err?.message || err);
-      mainWindow?.webContents.send("updater:error", {
-        message: err?.message || "Update check failed",
-      });
+      console.warn("\x1b[33m updater \x1b[0m background check info:", err?.message || err);
+      // Background startup checks fail completely silently; only notify if an active download failed
+      if (isDownloadingUpdate) {
+        isDownloadingUpdate = false;
+        mainWindow?.webContents.send("updater:error", {
+          message: err?.message || "Download failed",
+        });
+      }
     });
 
     ipcMain.handle("updater:check-for-updates", async () => {

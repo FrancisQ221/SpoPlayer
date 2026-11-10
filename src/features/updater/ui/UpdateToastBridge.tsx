@@ -61,6 +61,13 @@ export default function UpdateToastBridge() {
     }
 
     if (status === "error" && error) {
+      if (
+        error.includes("latest.yml") ||
+        error.includes("404") ||
+        error.includes("Cannot find")
+      ) {
+        return;
+      }
       toast(t("updater.error_title") || "Update failed", "error", {
         id: TOAST_ID,
         description: error,
