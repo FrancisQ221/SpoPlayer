@@ -8,6 +8,8 @@ import type { Track } from "@/shared/types";
 import { pitchShifter } from "./pitchShifter";
 import { resolvePlaybackStream, type PlaybackStream } from "./streamResolver";
 import { downloadAudioBytes } from "@/shared/media/innertube";
+import { startDynamicLevelingForNewTrack } from "./dynamicLeveling";
+import { applyBassSwapToOutgoing, resetBassSwapFilter } from "./bassSwap";
 
 
 // error recovery tuning (see the audio "error" handler)
@@ -250,8 +252,13 @@ export class PlayerRuntime {
         const remainingSec = audioEl.duration - audioEl.currentTime;
         if (remainingSec > 0 && remainingSec <= crossfadeSec) {
           const targetVol = usePlayerStore.getState().volume;
-          const fadeProgress = remainingSec / crossfadeSec;
+          const fadeProgress = remainingSec / crossfadeSec; // 1→0
           audioEl.volume = Math.max(0, targetVol * fadeProgress);
+          // Bass-swap: cut bass from outgoing track (progress = 1 - fadeProgress, so 0→1)
+          const bassSwapEnabled = usePlayerStore.getState().bassSwapEnabled ?? true;
+          applyBassSwapToOutgoing(1 - fadeProgress, bassSwapEnabled);
+        } else {
+          resetBassSwapFilter();
         }
       }
     });
@@ -735,6 +742,7 @@ export class PlayerRuntime {
 
         if (epoch === this.loadEpoch) {
           usePlayerStore.getState().setStatus("playing");
+          startDynamicLevelingForNewTrack();
           const crossfadeSec = usePlayerStore.getState().crossfadeSeconds || 0;
           const fadeInMs = crossfadeSec > 0 ? crossfadeSec * 1000 : 180;
           this.fadeVolume(usePlayerStore.getState().volume, fadeInMs);
@@ -802,6 +810,7 @@ export class PlayerRuntime {
 
       if (epoch === this.loadEpoch) {
         usePlayerStore.getState().setStatus("playing");
+        startDynamicLevelingForNewTrack();
         const crossfadeSec = usePlayerStore.getState().crossfadeSeconds || 0;
         const fadeInMs = crossfadeSec > 0 ? crossfadeSec * 1000 : 180;
         this.fadeVolume(usePlayerStore.getState().volume, fadeInMs);

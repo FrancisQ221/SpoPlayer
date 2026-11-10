@@ -16,6 +16,8 @@
  */
 
 import { getOrCreateEqualizerNodes } from "./equalizerEngine";
+import { getOrCreateDynamicLevelingNodes, connectSourceToLeveling } from "./dynamicLeveling";
+import { getOrCreateBassSwapFilter } from "./bassSwap";
 
 const GRAIN_PERIOD = 0.038; // 38ms grain window
 const NUM_TAPS = 4;
@@ -213,6 +215,7 @@ interface AudioEffectsGraph {
   convolver: ConvolverNode;
   reverbHighpass: BiquadFilterNode;
   reverbWetGain: GainNode;
+  bassSwapFilter: BiquadFilterNode | null;
 }
 
 export interface AudioEffectsParams {
@@ -334,9 +337,22 @@ export class PitchShifterController {
 
         const shifter = new HannPitchShifter(ctx);
 
-        // Pitch stage routing
-        sourceNode.connect(pitchDryGain);
-        sourceNode.connect(pitchWetGain);
+        // Bass-swap filter sits at the front of the chain (between source and pitch stages)
+        const bassSwapFilter = getOrCreateBassSwapFilter(ctx);
+
+        // Connect source: bass-swap filter -> dry/wet split
+        if (bassSwapFilter) {
+          sourceNode.connect(bassSwapFilter);
+          bassSwapFilter.connect(pitchDryGain);
+          bassSwapFilter.connect(pitchWetGain);
+        } else {
+          // Pitch stage routing
+          sourceNode.connect(pitchDryGain);
+          sourceNode.connect(pitchWetGain);
+        }
+
+        // Also tap source for dynamic leveling analysis
+        connectSourceToLeveling(sourceNode);
 
         pitchDryGain.connect(pitchStageOutput);
         pitchWetGain.connect(shifter.input);
@@ -370,7 +386,9 @@ export class PitchShifterController {
         reverbWetGain.connect(masterOutputGain);
 
         const eq = getOrCreateEqualizerNodes(ctx);
-        masterOutputGain.connect(eq.input);
+        const leveling = getOrCreateDynamicLevelingNodes(ctx);
+        masterOutputGain.connect(leveling.input);
+        leveling.output.connect(eq.input);
         eq.output.connect(ctx.destination);
 
         graph = {
@@ -386,6 +404,7 @@ export class PitchShifterController {
           convolver,
           reverbHighpass,
           reverbWetGain,
+          bassSwapFilter,
         };
 
         audioObj.__spoplayer_pitch_graph = graph;

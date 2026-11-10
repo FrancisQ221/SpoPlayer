@@ -33,6 +33,10 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
   );
   const crossfadeSeconds = usePlayerStore((state) => state.crossfadeSeconds ?? 0);
   const setCrossfadeSeconds = usePlayerStore((state) => state.setCrossfadeSeconds);
+  const dynamicLevelingEnabled = usePlayerStore((state) => state.dynamicLevelingEnabled ?? true);
+  const setDynamicLevelingEnabled = usePlayerStore((state) => state.setDynamicLevelingEnabled);
+  const bassSwapEnabled = usePlayerStore((state) => state.bassSwapEnabled ?? true);
+  const setBassSwapEnabled = usePlayerStore((state) => state.setBassSwapEnabled);
 
   // Last.fm Scrobbler store
   const lastFmEnabled = useLastFmStore((s) => s.enabled);
@@ -168,6 +172,40 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
           ) : (
             <span />
           )
+        }
+      />
+
+      <SettingRow
+        title={t("settings.playback.dynamic_leveling") || "Nivelación dinámica de volumen"}
+        description={
+          t("settings.playback.dynamic_leveling_desc") ||
+          "Ajusta automáticamente el volumen entre canciones para que suenen al mismo nivel percibido."
+        }
+        titleKey="settings.playback.dynamic_leveling"
+        descKey="settings.playback.dynamic_leveling_desc"
+        searchQuery={searchQuery}
+        control={
+          <ToggleSwitch
+            checked={dynamicLevelingEnabled}
+            onChange={setDynamicLevelingEnabled}
+          />
+        }
+      />
+
+      <SettingRow
+        title={t("settings.playback.bass_swap") || "Bass-Swap en Crossfade"}
+        description={
+          t("settings.playback.bass_swap_desc") ||
+          "Corta las frecuencias graves de la pista que termina durante el fundido para evitar solapamiento de bajos."
+        }
+        titleKey="settings.playback.bass_swap"
+        descKey="settings.playback.bass_swap_desc"
+        searchQuery={searchQuery}
+        control={
+          <ToggleSwitch
+            checked={bassSwapEnabled}
+            onChange={setBassSwapEnabled}
+          />
         }
       />
     </SettingSection>

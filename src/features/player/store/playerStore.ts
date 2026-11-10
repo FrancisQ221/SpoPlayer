@@ -67,6 +67,8 @@ export interface SessionState {
   sleepTimerType: number | "end_of_track" | null;
   sleepTimerEnd: number | null;
   lyricsViewMode: "cinematic" | "standard";
+  bassSwapEnabled: boolean;
+  dynamicLevelingEnabled: boolean;
 }
 
 export type PlayerState = TransportState &
@@ -128,6 +130,8 @@ export interface PlayerStore extends PlayerState {
   resetSpeedAndPitch: () => void;
   clearQueue: () => void;
   resetPlayback: () => void;
+  setBassSwapEnabled: (enabled: boolean) => void;
+  setDynamicLevelingEnabled: (enabled: boolean) => void;
 }
 
 const PLAYER_SESSION_STORAGE_KEY = "spoplayer_player_session_v2";
@@ -173,6 +177,8 @@ export const usePlayerStore = create<PlayerStore>()(
       sleepTimerType: null,
       sleepTimerEnd: null,
       lyricsViewMode: "cinematic",
+      bassSwapEnabled: true,
+      dynamicLevelingEnabled: true,
 
       dispatch: () => {
         // Implementation injected by PlayerEngine
@@ -232,6 +238,8 @@ export const usePlayerStore = create<PlayerStore>()(
           lyricsViewMode: s.lyricsViewMode === "cinematic" ? "standard" : "cinematic",
         })),
       resetSpeedAndPitch: () => set({ playbackRate: 1, pitchSemitones: 0 }),
+      setBassSwapEnabled: (bassSwapEnabled: boolean) => set({ bassSwapEnabled }),
+      setDynamicLevelingEnabled: (dynamicLevelingEnabled: boolean) => set({ dynamicLevelingEnabled }),
       resetPlayback: () =>
         set({
           status: "idle",
@@ -314,6 +322,12 @@ export const usePlayerStore = create<PlayerStore>()(
           if (typeof state.reverbLevel !== "number" || isNaN(state.reverbLevel)) {
             state.reverbLevel = 0.35;
           }
+          if (typeof state.bassSwapEnabled !== "boolean") {
+            state.bassSwapEnabled = true;
+          }
+          if (typeof state.dynamicLevelingEnabled !== "boolean") {
+            state.dynamicLevelingEnabled = true;
+          }
         }
       },
       partialize: (state) => ({
@@ -347,6 +361,8 @@ export const usePlayerStore = create<PlayerStore>()(
         reverbLevel: state.reverbLevel,
         crossfadeSeconds: state.crossfadeSeconds ?? 0,
         lyricsViewMode: state.lyricsViewMode,
+        bassSwapEnabled: state.bassSwapEnabled ?? true,
+        dynamicLevelingEnabled: state.dynamicLevelingEnabled ?? true,
       }),
     },
   ),

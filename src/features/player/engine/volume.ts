@@ -1,4 +1,4 @@
-const VOLUME_CURVE = 2;
+const VOLUME_CURVE = 3;
 
 function clamp(value: number): number {
   return Math.min(1, Math.max(0, value));

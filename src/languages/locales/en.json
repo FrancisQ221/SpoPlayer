@@ -498,7 +498,11 @@
     "playback": {
       "description": "Queue behavior, click actions and audio output.",
       "crossfade": "Crossfade tracks",
-      "crossfade_desc": "Smoothly fade out the current track and fade in the next track without silence."
+      "crossfade_desc": "Smoothly fade out the current track and fade in the next track without silence.",
+      "dynamic_leveling": "Dynamic volume leveling",
+      "dynamic_leveling_desc": "Automatically adjusts volume between tracks so they all play at a consistent perceived loudness.",
+      "bass_swap": "Bass-Swap Crossfade",
+      "bass_swap_desc": "Cuts low frequencies from the outgoing track during crossfade to avoid muddy bass overlap."
     },
     "shortcuts": {
       "description": "Customize global system-wide and player keyboard shortcuts.",

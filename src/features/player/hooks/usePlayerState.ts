@@ -30,6 +30,8 @@ const EMPTY_STATE: PlayerState = {
   isReverbEnabled: false,
   reverbLevel: 0.35,
   crossfadeSeconds: 0,
+  bassSwapEnabled: true,
+  dynamicLevelingEnabled: true,
   sleepTimerType: null,
   sleepTimerEnd: null,
   lyricsViewMode: "cinematic",

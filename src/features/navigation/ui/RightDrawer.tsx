@@ -846,6 +846,48 @@ function RightDrawer({ activeTab, onTabChange, onClose }: RightDrawerProps) {
               }
             }}
           >
+            {player.queue.length > 0 && (() => {
+              const remaining = player.queue.slice(
+                player.currentIndex >= 0 ? player.currentIndex : 0,
+              );
+              const totalMs = remaining.reduce(
+                (acc, t) => acc + (t.durationMs || 0),
+                0,
+              );
+              const totalSec = Math.floor(totalMs / 1000);
+              const hours = Math.floor(totalSec / 3600);
+              const mins = Math.floor((totalSec % 3600) / 60);
+              const durationStr =
+                hours > 0 ? `${hours} h ${mins} min` : `${mins} min`;
+              const finishMs = Date.now() + totalMs;
+              const finishDate = new Date(finishMs);
+              const finishStr = finishDate.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+
+              return (
+                <div
+                  className="px-[10px] py-[6px] mb-[6px] flex items-center justify-between text-[11px] font-[500] text-text-tertiary select-none border-b border-border-subtle/30"
+                  style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                >
+                  <div className="flex items-center gap-[6px]">
+                    <span>
+                      {remaining.length}{" "}
+                      {remaining.length === 1
+                        ? t("player.song") || "canción"
+                        : t("player.songs") || "canciones"}
+                    </span>
+                    <span>·</span>
+                    <span>{durationStr}</span>
+                  </div>
+                  <span>
+                    {t("player.finishes_at") || "Termina a las"} {finishStr}
+                  </span>
+                </div>
+              );
+            })()}
+
             {player.queue.length > 0 ? (
               <QueueList
                 queue={player.queue}
