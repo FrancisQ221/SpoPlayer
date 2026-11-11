@@ -15,6 +15,7 @@ import {
   useLikedTrackCount,
 } from "../hooks";
 import { HeartFill, AddLine, LinkLine } from "@mingcute/react";
+import { SiSpotify } from "react-icons/si";
 import { useTranslation } from "@/languages";
 import { useModalStore } from "../store/modalStore";
 import { useImportStore } from "../store/importStore";
@@ -397,6 +398,16 @@ export default function LibraryPage() {
                   >
                     <LinkLine size={16} />
                     <span>Importar desde otra app</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openImportPlaylist("https://open.spotify.com/playlist/")}
+                    title="Importar playlist de Spotify"
+                    className="flex items-center gap-[6px] h-[34px] px-[12px] rounded-lg bg-[#1DB954]/10 border border-[#1DB954]/30 hover:bg-[#1DB954]/20 hover:border-[#1DB954]/60 text-[#1DB954] font-medium text-[13px] active:scale-[0.96] transition-all cursor-pointer select-none"
+                    style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                  >
+                    <SiSpotify size={15} className="text-[#1DB954]" />
+                    <span>Importar de Spotify</span>
                   </button>
                 </div>
               )}

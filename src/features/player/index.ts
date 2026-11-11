@@ -2,6 +2,7 @@ export { playerRuntime } from "./engine/playerRuntime";
 export { playerEngine, type PlayerStatus, type PlayerStatus as PlaybackStatus } from "./engine/playerEngine";
 export { toVolumeGain, toVolumeLevel } from "./engine/volume";
 export { startDynamicLevelingForNewTrack, setDynamicLevelingEnabled } from "./engine/dynamicLeveling";
+export { setSpatialAudioEnabled, setSpatialAudioSpeed, type SpatialSpeed } from "./engine/spatialAudio";
 export {
   usePlayerStore,
   type AccentVariant,

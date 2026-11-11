@@ -10,6 +10,7 @@ import { resolvePlaybackStream, type PlaybackStream } from "./streamResolver";
 import { downloadAudioBytes } from "@/shared/media/innertube";
 import { startDynamicLevelingForNewTrack } from "./dynamicLeveling";
 import { applyBassSwapToOutgoing, resetBassSwapFilter } from "./bassSwap";
+import { setSpatialAudioEnabled, setSpatialAudioSpeed } from "./spatialAudio";
 
 
 // error recovery tuning (see the audio "error" handler)
@@ -46,6 +47,7 @@ export class PlayerRuntime {
   // loaded / cached track fires waiting -> playing within milliseconds, and flipping
   // the status for that re-animated the play / pause button on every seek
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
+  private gaplessTriggered = false;
   public onEnded?: () => void;
   public onError?: (info: { trackId: string; message: string }) => void;
 
@@ -70,6 +72,8 @@ export class PlayerRuntime {
     const initialVolume = usePlayerStore.getState().volume;
     this.audio.volume = initialVolume;
     this.applyPlaybackRateAndPitch();
+    setSpatialAudioEnabled(usePlayerStore.getState().spatialAudioEnabled ?? false);
+    setSpatialAudioSpeed(usePlayerStore.getState().spatialAudioSpeed ?? "normal");
     log("cyan", "boot", `volume ${initialVolume}`);
 
     usePlayerStore.subscribe((state, prevState) => {
@@ -81,6 +85,12 @@ export class PlayerRuntime {
         if (!this.audio.paused) {
           this.audio.volume = state.volume;
         }
+      }
+      if (state.spatialAudioEnabled !== prevState.spatialAudioEnabled) {
+        setSpatialAudioEnabled(state.spatialAudioEnabled ?? false);
+      }
+      if (state.spatialAudioSpeed !== prevState.spatialAudioSpeed) {
+        setSpatialAudioSpeed(state.spatialAudioSpeed ?? "normal");
       }
       if (
         state.playbackRate !== prevState.playbackRate ||
@@ -261,6 +271,19 @@ export class PlayerRuntime {
           resetBassSwapFilter();
         }
       }
+
+      // Strict Gapless Playback: advance track 0.25s before EOF to eliminate the dead silence gap
+      const gapless = usePlayerStore.getState().gaplessEnabled ?? true;
+      if (gapless && crossfadeSec === 0 && audioEl.duration > 0 && !audioEl.paused && !this.gaplessTriggered) {
+        const remainingSec = audioEl.duration - audioEl.currentTime;
+        if (remainingSec > 0 && remainingSec <= 0.25) {
+          this.gaplessTriggered = true;
+          log("cyan", "audio", "gapless threshold reached — transitioning seamlessly");
+          this.onEnded?.();
+          const state = usePlayerStore.getState();
+          state.dispatch({ type: "SKIP_NEXT", isAutoEnd: true });
+        }
+      }
     });
 
     audioEl.addEventListener("durationchange", () => {
@@ -308,6 +331,10 @@ export class PlayerRuntime {
       if (this.isResetting || audioEl !== this.audio) return;
       if (!this.currentTrackId) return;
       if (this.attachedTrackId !== this.currentTrackId) return;
+      if (this.gaplessTriggered) {
+        this.gaplessTriggered = false;
+        return;
+      }
 
       // Ensure the track truly finished playing (not an empty media load or teardown artefact)
       const duration = audioEl.duration;
@@ -642,6 +669,7 @@ export class PlayerRuntime {
     bypassCache: boolean = false,
   ) {
     this.cancelFade();
+    this.gaplessTriggered = false;
     this.pendingStartPositionMs = startPositionMs;
     const epoch = ++this.loadEpoch;
 

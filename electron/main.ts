@@ -18,6 +18,7 @@ import {
   getServerTimeOffset,
   type SignRequestInput,
 } from "./crypto.js";
+import { attachId3ToAudio, fetchImageBuffer } from "./id3.js";
 import {
   DEEP_LINK_SCHEME,
   findDeeplinkArg,
@@ -833,6 +834,66 @@ if (!gotTheLock) {
     ipcMain.handle("shell:open-export-folder", async (_event, customPath?: string) => {
       return openFolderOrItem(customPath);
     });
+
+    ipcMain.handle(
+      "export:track-mp3",
+      async (
+        _event,
+        input: {
+          title: string;
+          artist: string;
+          album?: string;
+          year?: string;
+          coverUrl?: string;
+          audioBytes: Uint8Array | number[];
+        },
+      ) => {
+        try {
+          const musicDir = path.join(app.getPath("music"), "SpoPlayer");
+          if (!fs.existsSync(musicDir)) {
+            fs.mkdirSync(musicDir, { recursive: true });
+          }
+
+          const safeArtist = (input.artist || "Unknown Artist")
+            .replace(/[\\/:*?"<>|]/g, "_")
+            .trim();
+          const safeTitle = (input.title || "Track")
+            .replace(/[\\/:*?"<>|]/g, "_")
+            .trim();
+          const fileName = `${safeArtist} - ${safeTitle}.mp3`.slice(0, 120);
+          const filePath = path.join(musicDir, fileName);
+
+          let coverImage: Buffer | null = null;
+          let coverMimeType: string | undefined = undefined;
+          if (input.coverUrl) {
+            const img = await fetchImageBuffer(input.coverUrl);
+            if (img) {
+              coverImage = img.buffer;
+              coverMimeType = img.mimeType;
+            }
+          }
+
+          const rawAudio = Buffer.from(input.audioBytes);
+          const taggedAudio = attachId3ToAudio(rawAudio, {
+            title: input.title,
+            artist: input.artist,
+            album: input.album,
+            year: input.year,
+            coverImage,
+            coverMimeType,
+          });
+
+          await fs.promises.writeFile(filePath, taggedAudio);
+          lastSavedExportPath = filePath;
+          shell.showItemInFolder(filePath);
+
+          return { success: true, filePath };
+        } catch (err: any) {
+          console.error("\x1b[41;37m export \x1b[0m export:track-mp3 error:", err);
+          return { success: false, error: err?.message || String(err) };
+        }
+      },
+    );
 
     // locates provider path where cache is collected
     const getCacheDirectory = () => {

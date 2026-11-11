@@ -8,9 +8,13 @@ import {
   LuTrash2,
   LuFolderPlus,
   LuDownload,
+  LuMusic,
 } from "react-icons/lu";
 import { CheckCircleFill } from "@mingcute/react";
 import { useOfflineStore, offlineManager } from "@/features/offline";
+import { spoplayerDb } from "@/shared/storage";
+import { resolvePlaybackStream } from "../engine/streamResolver";
+import { downloadAudioBytes } from "@/shared/media/innertube";
 import type { DropdownMenuItem } from "@/shared/ui/DropdownMenu";
 import { playerEngine } from "../engine/playerEngine";
 import {
@@ -87,6 +91,70 @@ export function useSongMenuItems(ctx: SongMenuContext): DropdownMenuItem[] {
       likeMutation.mutate(id);
     }
   }, [id, liked, likeMutation, unlikeMutation]);
+
+  const handleExportMp3 = useCallback(async () => {
+    if (!id) return;
+    const electron = (window as any).spoplayer;
+    if (!electron?.exportTrackMp3) {
+      showToast("Exportación disponible solo en la app de escritorio", "error");
+      return;
+    }
+
+    showToast("Preparando exportación MP3...", "info", {
+      description: `${title} — ${artists}`,
+    });
+
+    try {
+      let audioBlob: Blob | null = null;
+      const cached = await spoplayerDb.getAudio(id);
+      if (cached?.blob) {
+        audioBlob = cached.blob;
+      } else {
+        const stream = await resolvePlaybackStream({
+          id,
+          title,
+          artists,
+          durationMs: durationMs ?? 0,
+        });
+        if (stream.blob) {
+          audioBlob = stream.blob;
+        } else {
+          const bytes = await downloadAudioBytes(stream.url, {
+            contentLength: stream.contentLength,
+          });
+          if (bytes) {
+            audioBlob = new Blob([bytes], { type: stream.mimeType || "audio/webm" });
+          }
+        }
+      }
+
+      if (!audioBlob) {
+        throw new Error("No se pudo obtener el audio para exportar");
+      }
+
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+
+      const res = await electron.exportTrackMp3({
+        title,
+        artist: artists,
+        coverUrl,
+        audioBytes: uint8,
+      });
+
+      if (res?.success) {
+        showToast("MP3 exportado con éxito", "checkmark", {
+          description: "Guardado en Música/SpoPlayer con etiquetas ID3 y carátula HD",
+        });
+      } else {
+        throw new Error(res?.error || "Error al exportar");
+      }
+    } catch (err: any) {
+      showToast("Error al exportar MP3", "error", {
+        description: err?.message || String(err),
+      });
+    }
+  }, [id, title, artists, coverUrl, durationMs]);
 
   const buildMenu = useCallback((): DropdownMenuItem[] => {
     const isTrack = searchType === "track" || !searchType;
@@ -171,6 +239,12 @@ export function useSongMenuItems(ctx: SongMenuContext): DropdownMenuItem[] {
               <LuDownload size={15} />
             ),
             onClick: handleDownload,
+          },
+          {
+            id: "export-mp3",
+            label: "Exportar MP3 (con ID3 y Carátula)",
+            icon: <LuMusic size={15} />,
+            onClick: handleExportMp3,
           },
           {
             id: "remove-from-playlist",
@@ -271,6 +345,12 @@ export function useSongMenuItems(ctx: SongMenuContext): DropdownMenuItem[] {
             <LuDownload size={15} />
           ),
           onClick: handleDownload,
+        },
+        {
+          id: "export-mp3",
+          label: "Exportar MP3 (con ID3 y Carátula)",
+          icon: <LuMusic size={15} />,
+          onClick: handleExportMp3,
         },
         {
           id: "add-to-playlist",

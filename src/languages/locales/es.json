@@ -506,7 +506,16 @@
       "dynamic_leveling": "Nivelación dinámica de volumen",
       "dynamic_leveling_desc": "Ajusta automáticamente el volumen entre canciones para que suenen al mismo nivel percibido.",
       "bass_swap": "Bass-Swap en Crossfade",
-      "bass_swap_desc": "Corta las frecuencias graves de la pista que termina durante el fundido para evitar solapamiento de bajos."
+      "bass_swap_desc": "Corta las frecuencias graves de la pista que termina durante el fundido para evitar solapamiento de bajos.",
+      "gapless": "Reproducción Gapless Estricta",
+      "gapless_desc": "Elimina el silencio entre canciones para una transición continua sin pausas (0ms).",
+      "spatial_audio": "Audio Espacial 8D",
+      "spatial_audio_desc": "Simula un sonido envolvente en 360° con sombra acústica de cabeza. Recomendado con auriculares.",
+      "spatial_speed": "Velocidad de rotación 8D",
+      "spatial_speed_desc": "Velocidad a la que la música gira en 360° alrededor de tu cabeza.",
+      "spatial_speed_slow": "Lenta (16s)",
+      "spatial_speed_normal": "Normal (10s)",
+      "spatial_speed_fast": "Rápida (5.5s)"
     },
     "overlay": {
       "description": "Comportamiento del reproductor flotante, atajo global y posición.",

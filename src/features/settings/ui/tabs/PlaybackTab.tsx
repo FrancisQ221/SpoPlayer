@@ -37,6 +37,12 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
   const setDynamicLevelingEnabled = usePlayerStore((state) => state.setDynamicLevelingEnabled);
   const bassSwapEnabled = usePlayerStore((state) => state.bassSwapEnabled ?? true);
   const setBassSwapEnabled = usePlayerStore((state) => state.setBassSwapEnabled);
+  const gaplessEnabled = usePlayerStore((state) => state.gaplessEnabled ?? true);
+  const setGaplessEnabled = usePlayerStore((state) => state.setGaplessEnabled);
+  const spatialAudioEnabled = usePlayerStore((state) => state.spatialAudioEnabled ?? false);
+  const setSpatialAudioEnabled = usePlayerStore((state) => state.setSpatialAudioEnabled);
+  const spatialAudioSpeed = usePlayerStore((state) => state.spatialAudioSpeed ?? "normal");
+  const setSpatialAudioSpeed = usePlayerStore((state) => state.setSpatialAudioSpeed);
 
   // Last.fm Scrobbler store
   const lastFmEnabled = useLastFmStore((s) => s.enabled);
@@ -208,6 +214,69 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
           />
         }
       />
+
+      <SettingRow
+        title={t("settings.playback.gapless") || "Reproducción Gapless Estricta"}
+        description={
+          t("settings.playback.gapless_desc") ||
+          "Elimina el silencio entre canciones para una transición continua sin pausas (0ms)."
+        }
+        titleKey="settings.playback.gapless"
+        descKey="settings.playback.gapless_desc"
+        searchQuery={searchQuery}
+        control={
+          <ToggleSwitch
+            checked={gaplessEnabled}
+            onChange={setGaplessEnabled}
+          />
+        }
+      />
+
+      <SettingRow
+        title={t("settings.playback.spatial_audio") || "Audio Espacial 8D"}
+        description={
+          t("settings.playback.spatial_audio_desc") ||
+          "Simula un sonido envolvente en 360° con sombra acústica de cabeza. Recomendado con auriculares."
+        }
+        titleKey="settings.playback.spatial_audio"
+        descKey="settings.playback.spatial_audio_desc"
+        searchQuery={searchQuery}
+        control={
+          <ToggleSwitch
+            checked={spatialAudioEnabled}
+            onChange={setSpatialAudioEnabled}
+          />
+        }
+      />
+
+      {spatialAudioEnabled && (
+        <SettingRow
+          title={t("settings.playback.spatial_speed") || "Velocidad de rotación 8D"}
+          description={
+            t("settings.playback.spatial_speed_desc") ||
+            "Velocidad a la que la música gira en 360° alrededor de tu cabeza."
+          }
+          titleKey="settings.playback.spatial_speed"
+          descKey="settings.playback.spatial_speed_desc"
+          searchQuery={searchQuery}
+          control={
+            mounted ? (
+              <SegmentedControl
+                ariaLabel="Spatial Audio Speed"
+                value={spatialAudioSpeed}
+                onChange={(val) => setSpatialAudioSpeed(val as "slow" | "normal" | "fast")}
+                options={[
+                  { value: "slow", label: t("settings.playback.spatial_speed_slow") || "Lenta (16s)" },
+                  { value: "normal", label: t("settings.playback.spatial_speed_normal") || "Normal (10s)" },
+                  { value: "fast", label: t("settings.playback.spatial_speed_fast") || "Rápida (5.5s)" },
+                ]}
+              />
+            ) : (
+              <span />
+            )
+          }
+        />
+      )}
     </SettingSection>
 
     <SettingSection label="Last.fm & Scrobbling">

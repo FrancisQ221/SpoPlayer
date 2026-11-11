@@ -73,6 +73,14 @@ export interface SpoPlayerElectronApi {
   diagnoseNetwork: (hosts: string[]) => Promise<MainNetResult>;
   openDownloads: (customPath?: string) => Promise<boolean>;
   openExportFolder: (customPath?: string) => Promise<boolean>;
+  exportTrackMp3: (input: {
+    title: string;
+    artist: string;
+    album?: string;
+    year?: string;
+    coverUrl?: string;
+    audioBytes: Uint8Array | number[];
+  }) => Promise<{ success: boolean; filePath?: string; error?: string }>;
   saveDump: (input: { filename: string; content: string }) => Promise<{
     success: boolean;
     filePath?: string;
@@ -205,6 +213,7 @@ const api: SpoPlayerElectronApi = {
   diagnoseNetwork: (hosts) => ipcRenderer.invoke("net:diagnose", hosts),
   openDownloads: (customPath) => ipcRenderer.invoke("shell:open-downloads", customPath),
   openExportFolder: (customPath) => ipcRenderer.invoke("shell:open-export-folder", customPath),
+  exportTrackMp3: (input) => ipcRenderer.invoke("export:track-mp3", input),
   saveDump: (input) => ipcRenderer.invoke("dialog:save-dump", input),
   setAppIcon: (dataUrl, options) =>
     ipcRenderer.invoke("app:set-icon", dataUrl, options),

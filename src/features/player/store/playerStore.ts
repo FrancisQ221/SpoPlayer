@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Track } from "@/shared/types";
 import { debouncedStorage } from "@/shared/utils/storage";
+import type { SpatialSpeed } from "../engine/spatialAudio";
 
 export { debouncedStorage };
 
@@ -69,6 +70,9 @@ export interface SessionState {
   lyricsViewMode: "cinematic" | "standard";
   bassSwapEnabled: boolean;
   dynamicLevelingEnabled: boolean;
+  spatialAudioEnabled: boolean;
+  spatialAudioSpeed: SpatialSpeed;
+  gaplessEnabled: boolean;
 }
 
 export type PlayerState = TransportState &
@@ -132,6 +136,9 @@ export interface PlayerStore extends PlayerState {
   resetPlayback: () => void;
   setBassSwapEnabled: (enabled: boolean) => void;
   setDynamicLevelingEnabled: (enabled: boolean) => void;
+  setSpatialAudioEnabled: (enabled: boolean) => void;
+  setSpatialAudioSpeed: (speed: SpatialSpeed) => void;
+  setGaplessEnabled: (enabled: boolean) => void;
 }
 
 const PLAYER_SESSION_STORAGE_KEY = "spoplayer_player_session_v2";
@@ -179,6 +186,9 @@ export const usePlayerStore = create<PlayerStore>()(
       lyricsViewMode: "cinematic",
       bassSwapEnabled: true,
       dynamicLevelingEnabled: true,
+      spatialAudioEnabled: false,
+      spatialAudioSpeed: "normal",
+      gaplessEnabled: true,
 
       dispatch: () => {
         // Implementation injected by PlayerEngine
@@ -240,6 +250,9 @@ export const usePlayerStore = create<PlayerStore>()(
       resetSpeedAndPitch: () => set({ playbackRate: 1, pitchSemitones: 0 }),
       setBassSwapEnabled: (bassSwapEnabled: boolean) => set({ bassSwapEnabled }),
       setDynamicLevelingEnabled: (dynamicLevelingEnabled: boolean) => set({ dynamicLevelingEnabled }),
+      setSpatialAudioEnabled: (spatialAudioEnabled: boolean) => set({ spatialAudioEnabled }),
+      setSpatialAudioSpeed: (spatialAudioSpeed: SpatialSpeed) => set({ spatialAudioSpeed }),
+      setGaplessEnabled: (gaplessEnabled: boolean) => set({ gaplessEnabled }),
       resetPlayback: () =>
         set({
           status: "idle",
@@ -328,6 +341,15 @@ export const usePlayerStore = create<PlayerStore>()(
           if (typeof state.dynamicLevelingEnabled !== "boolean") {
             state.dynamicLevelingEnabled = true;
           }
+          if (typeof state.spatialAudioEnabled !== "boolean") {
+            state.spatialAudioEnabled = false;
+          }
+          if (!["slow", "normal", "fast"].includes(state.spatialAudioSpeed)) {
+            state.spatialAudioSpeed = "normal";
+          }
+          if (typeof state.gaplessEnabled !== "boolean") {
+            state.gaplessEnabled = true;
+          }
         }
       },
       partialize: (state) => ({
@@ -363,6 +385,9 @@ export const usePlayerStore = create<PlayerStore>()(
         lyricsViewMode: state.lyricsViewMode,
         bassSwapEnabled: state.bassSwapEnabled ?? true,
         dynamicLevelingEnabled: state.dynamicLevelingEnabled ?? true,
+        spatialAudioEnabled: state.spatialAudioEnabled ?? false,
+        spatialAudioSpeed: state.spatialAudioSpeed ?? "normal",
+        gaplessEnabled: state.gaplessEnabled ?? true,
       }),
     },
   ),

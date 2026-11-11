@@ -18,6 +18,7 @@
 import { getOrCreateEqualizerNodes } from "./equalizerEngine";
 import { getOrCreateDynamicLevelingNodes, connectSourceToLeveling } from "./dynamicLeveling";
 import { getOrCreateBassSwapFilter } from "./bassSwap";
+import { getOrCreateSpatialAudioNodes } from "./spatialAudio";
 
 const GRAIN_PERIOD = 0.038; // 38ms grain window
 const NUM_TAPS = 4;
@@ -387,8 +388,10 @@ export class PitchShifterController {
 
         const eq = getOrCreateEqualizerNodes(ctx);
         const leveling = getOrCreateDynamicLevelingNodes(ctx);
+        const spatial = getOrCreateSpatialAudioNodes(ctx);
         masterOutputGain.connect(leveling.input);
-        leveling.output.connect(eq.input);
+        leveling.output.connect(spatial.input);
+        spatial.output.connect(eq.input);
         eq.output.connect(ctx.destination);
 
         graph = {

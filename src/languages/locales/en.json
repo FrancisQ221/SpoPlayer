@@ -502,7 +502,16 @@
       "dynamic_leveling": "Dynamic volume leveling",
       "dynamic_leveling_desc": "Automatically adjusts volume between tracks so they all play at a consistent perceived loudness.",
       "bass_swap": "Bass-Swap Crossfade",
-      "bass_swap_desc": "Cuts low frequencies from the outgoing track during crossfade to avoid muddy bass overlap."
+      "bass_swap_desc": "Cuts low frequencies from the outgoing track during crossfade to avoid muddy bass overlap.",
+      "gapless": "Strict Gapless Playback",
+      "gapless_desc": "Eliminates silence between tracks for continuous seamless playback (0ms gap).",
+      "spatial_audio": "8D Spatial Audio",
+      "spatial_audio_desc": "Simulates a 360° immersive circular sound around your head with HRTF head-shadow. Best with headphones.",
+      "spatial_speed": "8D rotation speed",
+      "spatial_speed_desc": "Speed at which music rotates 360° around your head.",
+      "spatial_speed_slow": "Slow (16s)",
+      "spatial_speed_normal": "Normal (10s)",
+      "spatial_speed_fast": "Fast (5.5s)"
     },
     "shortcuts": {
       "description": "Customize global system-wide and player keyboard shortcuts.",
