@@ -22,6 +22,7 @@ import { useImportStore } from "../store/importStore";
 import { useIsContentTransparent } from "@/features/settings/store/customizationStore";
 import ImportingPlaylistCard from "./ImportingPlaylistCard";
 import { DownloadsTab } from "@/features/offline";
+import { LocalFilesTab } from "./LocalFilesTab";
 
 const PAGE_SIZE = 24;
 
@@ -44,6 +45,7 @@ const initialState: LibraryState = {
   albums: { ...initialTabState },
   artists: { ...initialTabState },
   downloads: { ...initialTabState },
+  local: { ...initialTabState },
 };
 
 function sortByRecent(items: LibraryItemViewModel[]) {
@@ -412,7 +414,7 @@ export default function LibraryPage() {
                 </div>
               )}
             </div>
-            {activeTab !== "downloads" && (
+            {activeTab !== "downloads" && activeTab !== "local" && (
               <LibraryControls
                 activeTab={activeTab}
                 query={activeState.query}
@@ -434,6 +436,8 @@ export default function LibraryPage() {
         <div className="px-[32px] pt-[4px] pb-[20px]">
           {activeTab === "downloads" ? (
             <DownloadsTab />
+          ) : activeTab === "local" ? (
+            <LocalFilesTab />
           ) : (
             <>
               {activeTab === "playlists" && playlistsError ? (

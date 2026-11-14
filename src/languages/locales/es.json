@@ -254,7 +254,9 @@
     "no_albums_desc": "Guarda álbumes desde la búsqueda o recomendaciones para encontrarlos rápidamente",
     "no_artists_title": "No hay artistas guardados",
     "no_artists_desc": "Guarda artistas para acceder rápidamente a su discografía",
-    "search_music": "Buscar música"
+    "search_music": "Buscar música",
+    "tab_local": "Archivos locales",
+    "search_local": "Buscar en música local..."
   },
   "login": {
     "welcome_back": "Te damos la bienvenida",

@@ -1,4 +1,4 @@
-import { app, BaseWindow, BrowserWindow, globalShortcut, ipcMain, shell, screen, dialog, session, nativeImage, powerSaveBlocker } from "electron";
+import { app, BaseWindow, BrowserWindow, globalShortcut, ipcMain, shell, screen, dialog, session, nativeImage, powerSaveBlocker, protocol, net as electronNet } from "electron";
 import type { Display, Rectangle } from "electron";
 import { autoUpdater } from "electron-updater";
 import path from "node:path";
@@ -9,7 +9,7 @@ import net from "node:net";
 import tls from "node:tls";
 import https from "node:https";
 import { execFile as nodeExecFile, type ChildProcess } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   signCoverUrl,
   signMonitorRequest,
@@ -19,6 +19,7 @@ import {
   type SignRequestInput,
 } from "./crypto.js";
 import { attachId3ToAudio, fetchImageBuffer } from "./id3.js";
+import { scanDirectories, parseLocalAudioFile } from "./local-music.js";
 import {
   DEEP_LINK_SCHEME,
   findDeeplinkArg,
@@ -63,6 +64,21 @@ app.commandLine.appendSwitch("ignore-gpu-blocklist");
 app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
 // forces resilient http/1.1 to prevent chromium err_http2_ping_failed on dropped network frames
 app.commandLine.appendSwitch("disable-http2");
+
+// register local-file protocol for streaming local audio files directly to Web Audio
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "local-file",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+      bypassCSP: true,
+    },
+  },
+]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -894,6 +910,75 @@ if (!gotTheLock) {
         }
       },
     );
+
+    protocol.handle("local-file", (request) => {
+      try {
+        const url = new URL(request.url);
+        let filePath = decodeURIComponent(url.pathname);
+        if (process.platform === "win32" && filePath.startsWith("/")) {
+          filePath = filePath.slice(1);
+        }
+        return electronNet.fetch(pathToFileURL(filePath).toString());
+      } catch {
+        return new Response("Not found", { status: 404 });
+      }
+    });
+
+    // Local music IPC handlers
+    ipcMain.handle("local-music:get-default-folders", () => {
+      try {
+        return [app.getPath("music")];
+      } catch {
+        return [];
+      }
+    });
+
+    ipcMain.handle("local-music:pick-folder", async () => {
+      try {
+        if (!mainWindow) return null;
+        const res = await dialog.showOpenDialog(mainWindow, {
+          properties: ["openDirectory"],
+          title: "Seleccionar carpeta de música",
+        });
+        if (res.canceled || !res.filePaths.length) return null;
+        return res.filePaths[0];
+      } catch (err) {
+        console.error("local-music:pick-folder error:", err);
+        return null;
+      }
+    });
+
+    ipcMain.handle("local-music:scan", async (_event, folders: string[]) => {
+      try {
+        const targetDirs =
+          Array.isArray(folders) && folders.length > 0
+            ? folders
+            : [app.getPath("music")];
+        return await scanDirectories(targetDirs);
+      } catch (err) {
+        console.error("local-music:scan error:", err);
+        return [];
+      }
+    });
+
+    ipcMain.handle("local-music:parse-file", async (_event, filePath: string) => {
+      try {
+        return await parseLocalAudioFile(filePath);
+      } catch (err) {
+        console.error("local-music:parse-file error:", err);
+        return null;
+      }
+    });
+
+    ipcMain.handle("local-music:open-in-folder", (_event, filePath: string) => {
+      try {
+        if (filePath && fs.existsSync(filePath)) {
+          shell.showItemInFolder(filePath);
+        }
+      } catch (err) {
+        console.error("local-music:open-in-folder error:", err);
+      }
+    });
 
     // locates provider path where cache is collected
     const getCacheDirectory = () => {

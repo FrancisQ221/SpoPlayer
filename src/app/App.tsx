@@ -11,6 +11,7 @@ import { useThemeCustomizationSync } from "@/features/settings";
 import { useTouchBarSync } from "@/features/touchbar";
 import { useOverlaySync } from "@/features/overlay";
 import { useTraySync } from "@/features/tray";
+import { useLocalFileDrop } from "@/features/library/hooks/useLocalFileDrop";
 import { AppRoutes } from "./routes";
 import DeeplinkHandler from "./DeeplinkHandler";
 import EnvironmentWarning from "./EnvironmentWarning";
@@ -47,6 +48,26 @@ function TraySync() {
   return null;
 }
 
+function LocalFileDropSync() {
+  const { isDraggingOver } = useLocalFileDrop();
+  if (!isDraggingOver) return null;
+  return (
+    <div className="fixed inset-0 z-[999999] pointer-events-none bg-black/75 backdrop-blur-md flex flex-col items-center justify-center border-4 border-dashed border-[var(--accent-primary,#00f59b)] text-white select-none">
+      <div className="p-8 rounded-3xl bg-bg-elevated/95 border border-border-primary/40 flex flex-col items-center gap-3 shadow-2xl">
+        <div className="h-16 w-16 rounded-full bg-[var(--accent-primary,#00f59b)]/20 text-[var(--accent-primary,#00f59b)] flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18V5l12-2v13" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="18" cy="16" r="3" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-text-primary">Suelta para reproducir archivo local</h3>
+        <p className="text-sm text-text-secondary">Compatible con MP3, FLAC, WAV, M4A, OGG</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   useWindowDrag();
 
@@ -66,6 +87,7 @@ export default function App() {
         <TouchBarSync />
         <OverlaySync />
         <TraySync />
+        <LocalFileDropSync />
         <AppleEmojiProvider>
           <I18nProvider>
             <ToastProvider>

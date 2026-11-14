@@ -73,6 +73,11 @@ export interface SpoPlayerElectronApi {
   diagnoseNetwork: (hosts: string[]) => Promise<MainNetResult>;
   openDownloads: (customPath?: string) => Promise<boolean>;
   openExportFolder: (customPath?: string) => Promise<boolean>;
+  scanLocalMusic: (folders?: string[]) => Promise<any[]>;
+  pickMusicFolder: () => Promise<string | null>;
+  getDefaultMusicFolders: () => Promise<string[]>;
+  parseLocalAudioFile: (filePath: string) => Promise<any | null>;
+  openLocalFileInFolder: (filePath: string) => Promise<void>;
   exportTrackMp3: (input: {
     title: string;
     artist: string;
@@ -213,6 +218,11 @@ const api: SpoPlayerElectronApi = {
   diagnoseNetwork: (hosts) => ipcRenderer.invoke("net:diagnose", hosts),
   openDownloads: (customPath) => ipcRenderer.invoke("shell:open-downloads", customPath),
   openExportFolder: (customPath) => ipcRenderer.invoke("shell:open-export-folder", customPath),
+  scanLocalMusic: (folders) => ipcRenderer.invoke("local-music:scan", folders),
+  pickMusicFolder: () => ipcRenderer.invoke("local-music:pick-folder"),
+  getDefaultMusicFolders: () => ipcRenderer.invoke("local-music:get-default-folders"),
+  parseLocalAudioFile: (filePath) => ipcRenderer.invoke("local-music:parse-file", filePath),
+  openLocalFileInFolder: (filePath) => ipcRenderer.invoke("local-music:open-in-folder", filePath),
   exportTrackMp3: (input) => ipcRenderer.invoke("export:track-mp3", input),
   saveDump: (input) => ipcRenderer.invoke("dialog:save-dump", input),
   setAppIcon: (dataUrl, options) =>

@@ -33,6 +33,7 @@ export default function LibraryControls({
     albums: t("library.search_albums"),
     artists: t("library.search_artists"),
     downloads: t("library.search_playlists"),
+    local: t("library.search_local") || "Buscar en música local...",
   };
 
   return (

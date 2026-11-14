@@ -250,7 +250,9 @@
     "no_albums_desc": "Save albums from search or recommendations to find them quickly",
     "no_artists_title": "No saved artists",
     "no_artists_desc": "Save artists to quickly access their discography",
-    "search_music": "Search music"
+    "search_music": "Search music",
+    "tab_local": "Local files",
+    "search_local": "Search local music..."
   },
   "login": {
     "welcome_back": "Welcome back",

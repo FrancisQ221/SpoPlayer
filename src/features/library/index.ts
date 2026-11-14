@@ -27,4 +27,6 @@ export * from "./hooks";
 // Store
 export * from "./store/modalStore";
 export * from "./store/importStore";
+export * from "./store/localMediaStore";
+export { LocalFilesTab } from "./ui/LocalFilesTab";
 

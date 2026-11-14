@@ -589,6 +589,7 @@ export class PlayerRuntime {
   }
 
   public async preloadTrack(track: Track): Promise<void> {
+    if (track.id.startsWith("local:")) return;
     if (this.currentTrackId === track.id) return;
     if (this.preloadingTrackId === track.id) return;
 
@@ -1035,6 +1036,7 @@ export class PlayerRuntime {
   }
 
   private cacheAudioInBackground(track: Track, stream: PlaybackStream, signal: AbortSignal) {
+    if (track.id.startsWith("local:")) return;
     if (track.durationMs && track.durationMs > 20 * 60 * 1000) return;
     const generation = audioCache.currentGeneration();
     void (async () => {

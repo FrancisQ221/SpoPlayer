@@ -46,6 +46,18 @@ async function resolveYoutubeTrack(track: PlayableTrack, videoId: string, signal
 }
 
 export async function resolvePlaybackStream(track: PlayableTrack, signal?: AbortSignal): Promise<PlaybackStream> {
+  if (track.id.startsWith("local:")) {
+    const rawPath = decodeURIComponent(track.id.slice("local:".length));
+    const normalized = rawPath.replace(/\\/g, "/");
+    const url = `local-file:///${encodeURI(normalized)}`;
+    return {
+      url,
+      mimeType: "audio/mpeg",
+      codec: "mp3",
+      bitrate: 320000,
+      expiresAtMs: null,
+    };
+  }
   if (toSoundCloudTrackId(track.id)) return resolveSoundCloud(track, signal);
   const videoId = toVideoId(track.id);
   if (videoId) return resolveYoutubeTrack(track, videoId, signal);

@@ -9,6 +9,7 @@ import {
   LuFolderPlus,
   LuDownload,
   LuMusic,
+  LuFolderOpen,
 } from "react-icons/lu";
 import { CheckCircleFill } from "@mingcute/react";
 import { useOfflineStore, offlineManager } from "@/features/offline";
@@ -156,6 +157,15 @@ export function useSongMenuItems(ctx: SongMenuContext): DropdownMenuItem[] {
     }
   }, [id, title, artists, coverUrl, durationMs]);
 
+  const handleOpenLocalFolder = useCallback(async () => {
+    if (!id || !id.startsWith("local:")) return;
+    const rawPath = decodeURIComponent(id.slice("local:".length));
+    const electron = (window as any).spoplayer;
+    if (electron?.openLocalFileInFolder) {
+      await electron.openLocalFileInFolder(rawPath);
+    }
+  }, [id]);
+
   const buildMenu = useCallback((): DropdownMenuItem[] => {
     const isTrack = searchType === "track" || !searchType;
 
@@ -224,28 +234,39 @@ export function useSongMenuItems(ctx: SongMenuContext): DropdownMenuItem[] {
             ),
             onClick: handleLike,
           },
-          {
-            id: isDownloaded ? "remove-download" : "download-track",
-            label: isDownloading
-              ? (t("offline.downloading") || "Descargando...")
-              : isDownloaded
-                ? (t("offline.remove_download") || "Eliminar descarga")
-                : (t("offline.download_track") || "Descargar canción"),
-            icon: isDownloading ? (
-              <div className="h-[14px] w-[14px] animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
-            ) : isDownloaded ? (
-              <CheckCircleFill size={15} className="text-emerald-400" />
-            ) : (
-              <LuDownload size={15} />
-            ),
-            onClick: handleDownload,
-          },
-          {
-            id: "export-mp3",
-            label: "Exportar MP3 (con ID3 y Carátula)",
-            icon: <LuMusic size={15} />,
-            onClick: handleExportMp3,
-          },
+          ...(id?.startsWith("local:")
+            ? [
+                {
+                  id: "show-in-folder",
+                  label: "Mostrar en el Explorador",
+                  icon: <LuFolderOpen size={15} />,
+                  onClick: handleOpenLocalFolder,
+                },
+              ]
+            : [
+                {
+                  id: isDownloaded ? "remove-download" : "download-track",
+                  label: isDownloading
+                    ? (t("offline.downloading") || "Descargando...")
+                    : isDownloaded
+                      ? (t("offline.remove_download") || "Eliminar descarga")
+                      : (t("offline.download_track") || "Descargar canción"),
+                  icon: isDownloading ? (
+                    <div className="h-[14px] w-[14px] animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+                  ) : isDownloaded ? (
+                    <CheckCircleFill size={15} className="text-emerald-400" />
+                  ) : (
+                    <LuDownload size={15} />
+                  ),
+                  onClick: handleDownload,
+                },
+                {
+                  id: "export-mp3",
+                  label: "Exportar MP3 (con ID3 y Carátula)",
+                  icon: <LuMusic size={15} />,
+                  onClick: handleExportMp3,
+                },
+              ]),
           {
             id: "remove-from-playlist",
             label: t("common.remove_from_playlist"),
@@ -330,28 +351,39 @@ export function useSongMenuItems(ctx: SongMenuContext): DropdownMenuItem[] {
           ),
           onClick: handleLike,
         },
-        {
-          id: isDownloaded ? "remove-download" : "download-track",
-          label: isDownloading
-            ? (t("offline.downloading") || "Descargando...")
-            : isDownloaded
-              ? (t("offline.remove_download") || "Eliminar descarga")
-              : (t("offline.download_track") || "Descargar canción"),
-          icon: isDownloading ? (
-            <div className="h-[14px] w-[14px] animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
-          ) : isDownloaded ? (
-            <CheckCircleFill size={15} className="text-emerald-400" />
-          ) : (
-            <LuDownload size={15} />
-          ),
-          onClick: handleDownload,
-        },
-        {
-          id: "export-mp3",
-          label: "Exportar MP3 (con ID3 y Carátula)",
-          icon: <LuMusic size={15} />,
-          onClick: handleExportMp3,
-        },
+        ...(id?.startsWith("local:")
+          ? [
+              {
+                id: "show-in-folder",
+                label: "Mostrar en el Explorador",
+                icon: <LuFolderOpen size={15} />,
+                onClick: handleOpenLocalFolder,
+              },
+            ]
+          : [
+              {
+                id: isDownloaded ? "remove-download" : "download-track",
+                label: isDownloading
+                  ? (t("offline.downloading") || "Descargando...")
+                  : isDownloaded
+                    ? (t("offline.remove_download") || "Eliminar descarga")
+                    : (t("offline.download_track") || "Descargar canción"),
+                icon: isDownloading ? (
+                  <div className="h-[14px] w-[14px] animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+                ) : isDownloaded ? (
+                  <CheckCircleFill size={15} className="text-emerald-400" />
+                ) : (
+                  <LuDownload size={15} />
+                ),
+                onClick: handleDownload,
+              },
+              {
+                id: "export-mp3",
+                label: "Exportar MP3 (con ID3 y Carátula)",
+                icon: <LuMusic size={15} />,
+                onClick: handleExportMp3,
+              },
+            ]),
         {
           id: "add-to-playlist",
           label: t("common.add_to_playlist"),

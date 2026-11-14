@@ -1149,7 +1149,7 @@ class PlayerEngine {
   }
 
   private async prefetchLyrics(trackId: string, hint?: LyricsHint): Promise<void> {
-    if (!trackId) return;
+    if (!trackId || trackId.startsWith("local:")) return;
 
     if (lyricsCache.has(trackId)) return;
     if (this.inFlightLyricsPrefetches.has(trackId)) {
