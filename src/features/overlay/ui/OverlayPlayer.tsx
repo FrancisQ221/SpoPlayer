@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "@/languages";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   SkipNext,
   SkipPrevious,
+  AltArrowDown,
 } from "@solar-icons/react";
+import { HeartFill, HeartLine } from "@mingcute/react";
 import {
   PlayerMorphIcon,
   ICON_PLAY,
@@ -24,7 +26,7 @@ import { useShortcutsStore } from "@/features/shortcuts/store/shortcutsStore";
 import { matchesShortcut } from "@/features/shortcuts/utils/shortcutMatching";
 
 const OVERLAY_CARD_TRANSITION = {
-  duration: 0.12,
+  duration: 0.16,
   ease: [0.16, 1, 0.3, 1],
 } as const;
 
@@ -57,6 +59,10 @@ export function OverlayPlayer() {
   const [interpolatedPosMs, setInterpolatedPosMs] = useState(state.positionMs);
   const lastTrackIdRef = useRef<string | null>(null);
 
+  // Live scrubbing state for expanded timeline
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
+
   // Drag vs Click detection for overlay window
   const dragStartPosRef = useRef<{ screenX: number; screenY: number } | null>(null);
   const isDraggingRef = useRef(false);
@@ -85,7 +91,7 @@ export function OverlayPlayer() {
     if (!dragStartPosRef.current) return;
     const deltaX = e.screenX - dragStartPosRef.current.screenX;
     const deltaY = e.screenY - dragStartPosRef.current.screenY;
-    if (!isDraggingRef.current && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3)) {
+    if (!isDraggingRef.current && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
       isDraggingRef.current = true;
     }
     if (isDraggingRef.current) {
@@ -183,7 +189,7 @@ export function OverlayPlayer() {
   }, [state.positionMs, state.status, state.track?.id]);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || isScrubbing) return;
     let animId: number;
 
     const step = () => {
@@ -203,16 +209,46 @@ export function OverlayPlayer() {
       anchorPosRef.current = Math.min(durationMs, anchorPosRef.current + elapsed);
       anchorTimeRef.current = performance.now();
     };
-  }, [isPlaying, durationMs]);
+  }, [isPlaying, isScrubbing, durationMs]);
 
-  const currentPosMs = interpolatedPosMs;
+  const currentPosMs = scrubPositionMs !== null ? scrubPositionMs : interpolatedPosMs;
   const progressRatio = Math.min(1, Math.max(0, currentPosMs / durationMs));
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Timeline Scrubber interaction (drag & seek)
+  const calcScrubTime = (clientX: number, rect: DOMRect) => {
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    return Math.round(ratio * durationMs);
+  };
+
+  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-    const targetMs = Math.round(ratio * durationMs);
+    const targetMs = calcScrubTime(e.clientX, rect);
+    setIsScrubbing(true);
+    setScrubPositionMs(targetMs);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const targetMs = calcScrubTime(e.clientX, rect);
+    setScrubPositionMs(targetMs);
+  };
+
+  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const targetMs = calcScrubTime(e.clientX, rect);
+    setIsScrubbing(false);
+    setScrubPositionMs(null);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
     setInterpolatedPosMs(targetMs);
     anchorPosRef.current = targetMs;
     anchorTimeRef.current = performance.now();
@@ -233,7 +269,7 @@ export function OverlayPlayer() {
         ? contentViewConfig
         : DEFAULT_GLASS_CONFIG;
 
-  const alpha = Math.min(0.92, (activeBlockConfig?.opacity ?? 70) / 100);
+  const alpha = Math.min(0.94, (activeBlockConfig?.opacity ?? 75) / 100);
   const dimAlpha = (activeBlockConfig?.dim ?? 15) / 100;
   const blurPx = activeBlockConfig?.blur ?? 24;
 
@@ -249,7 +285,7 @@ export function OverlayPlayer() {
     });
   }, []);
 
-  // Keyboard Shortcuts (Miniplayer mode)
+  // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
@@ -339,8 +375,8 @@ export function OverlayPlayer() {
       <motion.div
         layout
         transition={OVERLAY_CARD_TRANSITION}
-        className={`relative flex w-full shrink-0 flex-col overflow-hidden bg-[#0d0d10] border border-white/10 dark:border-[var(--accent-primary,#00f59b)]/30 shadow-[0_12px_36px_rgba(0,0,0,0.65)] ${
-          isExpanded ? "h-[96px] rounded-[18px] p-2.5" : "h-[48px] rounded-full px-2 py-1.5"
+        className={`relative flex w-full shrink-0 flex-col overflow-hidden bg-[#0d0d10] border border-white/10 dark:border-[var(--accent-primary,#00f59b)]/35 shadow-[0_12px_40px_rgba(0,0,0,0.7)] hover:border-[var(--accent-primary,#00f59b)]/40 transition-colors ${
+          isExpanded ? "h-[104px] rounded-[22px] px-3.5 py-2.5" : "h-[48px] rounded-full px-2.5 py-1.5"
         }`}
         style={{
           willChange: "transform, opacity",
@@ -375,20 +411,20 @@ export function OverlayPlayer() {
 
         {/* ================= COMPACT STATE (IMAGE 1) ================= */}
         {!isExpanded && (
-          <div className="relative z-[2] flex h-full w-full items-center justify-between gap-2">
-            {/* Left: Artwork */}
-            <div className="relative h-[34px] w-[34px] shrink-0 overflow-hidden rounded-[8px] bg-[#16161a] shadow-sm">
+          <div className="relative z-[2] flex h-full w-full items-center justify-between gap-2.5">
+            {/* Left: Artwork (Square) */}
+            <div className="relative h-[36px] w-[36px] shrink-0 overflow-hidden rounded-[9px] bg-[#16161a] shadow-sm border border-white/10">
               {state.track?.coverUrl || state.track?.cover ? (
                 <CoverImage
                   key={state.track.coverUrl || state.track.cover}
                   src={state.track.coverUrl || state.track.cover || ""}
                   alt={state.track?.title || "Artwork"}
                   fill
-                  sizes="34px"
+                  sizes="36px"
                   priority
                   unoptimized
                   draggable={false}
-                  className="rounded-[8px] object-cover pointer-events-none select-none"
+                  className="rounded-[9px] object-cover pointer-events-none select-none"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[12px] text-white/30 select-none">
@@ -396,7 +432,7 @@ export function OverlayPlayer() {
                 </div>
               )}
               {isPlaying && (
-                <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-end justify-center gap-[2px] pb-[5px] pointer-events-none">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[0.5px] flex items-end justify-center gap-[2px] pb-[5px] pointer-events-none">
                   <span className="spoplayer-eq-bar" />
                   <span className="spoplayer-eq-bar" />
                   <span className="spoplayer-eq-bar" />
@@ -413,13 +449,13 @@ export function OverlayPlayer() {
               <ScrollableText
                 text={state.track?.title || t("player.nothing_playing")}
                 isParentHovered={isInfoHovered}
-                className="text-[12px] font-semibold leading-[15px] text-white tracking-tight truncate"
+                className="text-[13px] font-semibold leading-[16px] text-white tracking-tight truncate"
                 style={{ fontFamily: "var(--font-inter), sans-serif" }}
               />
               <ScrollableText
                 text={state.track?.artist || t("player.choose_track")}
                 isParentHovered={isInfoHovered}
-                className="mt-[1px] text-[10px] font-normal leading-[13px] text-white/55 truncate"
+                className="mt-[1.5px] text-[11px] font-normal leading-[13px] text-white/55 truncate"
                 style={{ fontFamily: "var(--font-inter), sans-serif" }}
               />
             </div>
@@ -439,11 +475,11 @@ export function OverlayPlayer() {
                   e.stopPropagation();
                   sendAction({ type: "prev" });
                 }}
-                className="flex h-[26px] w-[26px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
+                className="flex h-[28px] w-[28px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
                 aria-label="Previous"
                 title="Anterior"
               >
-                <SkipPrevious size={16} weight="Bold" />
+                <SkipPrevious size={17} weight="Bold" />
               </button>
 
               <button
@@ -454,7 +490,7 @@ export function OverlayPlayer() {
                   e.stopPropagation();
                   sendAction({ type: "togglePlay" });
                 }}
-                className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--accent-primary,#00f59b)] text-black shadow-[0_0_12px_rgba(0,245,155,0.4)] hover:shadow-[0_0_16px_rgba(0,245,155,0.6)] hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
+                className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[var(--accent-primary,#00f59b)] text-black shadow-[0_0_14px_rgba(0,245,155,0.45)] hover:shadow-[0_0_18px_rgba(0,245,155,0.65)] hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
                 aria-label={isPlaying ? "Pause" : "Play"}
                 title={isPlaying ? "Pausar" : "Reproducir"}
               >
@@ -465,7 +501,7 @@ export function OverlayPlayer() {
                 >
                   <PlayerMorphIcon
                     icon={isPlaying ? ICON_PAUSE : ICON_PLAY}
-                    size={15}
+                    size={16}
                   />
                 </span>
               </button>
@@ -478,11 +514,11 @@ export function OverlayPlayer() {
                   e.stopPropagation();
                   sendAction({ type: "next" });
                 }}
-                className="flex h-[26px] w-[26px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
+                className="flex h-[28px] w-[28px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
                 aria-label="Next"
                 title="Siguiente"
               >
-                <SkipNext size={16} weight="Bold" />
+                <SkipNext size={17} weight="Bold" />
               </button>
             </div>
           </div>
@@ -494,18 +530,18 @@ export function OverlayPlayer() {
             {/* Top row: Larger Cover, Maximum Title/Artist, Larger Controls */}
             <div className="flex items-center gap-3 w-full">
               {/* Larger Artwork */}
-              <div className="relative h-[48px] w-[48px] shrink-0 overflow-hidden rounded-[10px] bg-[#16161a] shadow-md">
+              <div className="relative h-[50px] w-[50px] shrink-0 overflow-hidden rounded-[12px] bg-[#16161a] shadow-md border border-white/10">
                 {state.track?.coverUrl || state.track?.cover ? (
                   <CoverImage
                     key={state.track.coverUrl || state.track.cover}
                     src={state.track.coverUrl || state.track.cover || ""}
                     alt={state.track?.title || "Artwork"}
                     fill
-                    sizes="48px"
+                    sizes="50px"
                     priority
                     unoptimized
                     draggable={false}
-                    className="rounded-[10px] object-cover pointer-events-none select-none"
+                    className="rounded-[12px] object-cover pointer-events-none select-none"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[16px] text-white/30 select-none">
@@ -513,7 +549,8 @@ export function OverlayPlayer() {
                   </div>
                 )}
                 {isPlaying && (
-                  <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-end justify-center gap-[2px] pb-[6px] pointer-events-none">
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[0.5px] flex items-end justify-center gap-[2.5px] pb-[7px] pointer-events-none">
+                    <span className="spoplayer-eq-bar" />
                     <span className="spoplayer-eq-bar" />
                     <span className="spoplayer-eq-bar" />
                     <span className="spoplayer-eq-bar" />
@@ -521,7 +558,7 @@ export function OverlayPlayer() {
                 )}
               </div>
 
-              {/* Maximum Title & Artist */}
+              {/* Maximum Title & Artist Space */}
               <div
                 className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pr-2"
                 onMouseEnter={() => setIsInfoHovered(true)}
@@ -530,18 +567,18 @@ export function OverlayPlayer() {
                 <ScrollableText
                   text={state.track?.title || t("player.nothing_playing")}
                   isParentHovered={isInfoHovered}
-                  className="text-[14px] font-bold leading-[17px] text-white tracking-tight truncate"
+                  className="text-[15px] font-bold leading-[18px] text-white tracking-tight truncate"
                   style={{ fontFamily: "var(--font-inter), sans-serif" }}
                 />
                 <ScrollableText
                   text={state.track?.artist || t("player.choose_track")}
                   isParentHovered={isInfoHovered}
-                  className="mt-[2px] text-[11px] font-medium leading-[14px] text-white/60 truncate"
+                  className="mt-[3px] text-[12px] font-medium leading-[15px] text-white/65 truncate"
                   style={{ fontFamily: "var(--font-inter), sans-serif" }}
                 />
               </div>
 
-              {/* Larger Controls */}
+              {/* Larger Controls & Utilities */}
               <div
                 data-no-toggle="true"
                 className="flex items-center gap-[6px] shrink-0"
@@ -556,11 +593,11 @@ export function OverlayPlayer() {
                     e.stopPropagation();
                     sendAction({ type: "prev" });
                   }}
-                  className="flex h-[32px] w-[32px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
+                  className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
                   aria-label="Previous"
                   title="Anterior"
                 >
-                  <SkipPrevious size={20} weight="Bold" />
+                  <SkipPrevious size={21} weight="Bold" />
                 </button>
 
                 <button
@@ -571,7 +608,7 @@ export function OverlayPlayer() {
                     e.stopPropagation();
                     sendAction({ type: "togglePlay" });
                   }}
-                  className="inline-flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[var(--accent-primary,#00f59b)] text-black shadow-[0_0_16px_rgba(0,245,155,0.45)] hover:shadow-[0_0_22px_rgba(0,245,155,0.65)] hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
+                  className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[var(--accent-primary,#00f59b)] text-black shadow-[0_0_18px_rgba(0,245,155,0.45)] hover:shadow-[0_0_24px_rgba(0,245,155,0.65)] hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
                   aria-label={isPlaying ? "Pause" : "Play"}
                   title={isPlaying ? "Pausar" : "Reproducir"}
                 >
@@ -582,7 +619,7 @@ export function OverlayPlayer() {
                   >
                     <PlayerMorphIcon
                       icon={isPlaying ? ICON_PAUSE : ICON_PLAY}
-                      size={18}
+                      size={19}
                     />
                   </span>
                 </button>
@@ -595,11 +632,47 @@ export function OverlayPlayer() {
                     e.stopPropagation();
                     sendAction({ type: "next" });
                   }}
-                  className="flex h-[32px] w-[32px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
+                  className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-0 bg-transparent text-white/70 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
                   aria-label="Next"
                   title="Siguiente"
                 >
-                  <SkipNext size={20} weight="Bold" />
+                  <SkipNext size={21} weight="Bold" />
+                </button>
+
+                <span className="mx-[1px] h-[18px] w-px bg-white/15" aria-hidden="true" />
+
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  data-no-toggle="true"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sendAction({ type: "like" });
+                  }}
+                  className={`flex h-[28px] w-[28px] items-center justify-center rounded-full border-0 bg-transparent transition-all outline-none cursor-pointer active:scale-90 ${
+                    state.isLiked
+                      ? "text-[var(--accent-primary,#00f59b)] drop-shadow-[0_0_8px_rgba(0,245,155,0.45)]"
+                      : "text-white/40 hover:text-white hover:bg-white/10"
+                  }`}
+                  aria-label={state.isLiked ? "Unlike" : "Like"}
+                  title={state.isLiked ? "Quitar de favoritos" : "Favorito"}
+                >
+                  {state.isLiked ? <HeartFill size={17} /> : <HeartLine size={17} />}
+                </button>
+
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  data-no-toggle="true"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpanded();
+                  }}
+                  className="flex h-[28px] w-[28px] items-center justify-center rounded-full border-0 bg-transparent text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all outline-none cursor-pointer"
+                  aria-label="Contraer"
+                  title="Contraer"
+                >
+                  <AltArrowDown size={17} weight="Outline" />
                 </button>
               </div>
             </div>
@@ -607,33 +680,37 @@ export function OverlayPlayer() {
             {/* Bottom row: Playback Line with Timestamps [1:00 ~~~~~ 4:00] (IMAGE 3) */}
             <div
               data-no-toggle="true"
-              className="flex items-center gap-2 w-full pt-1 pb-0.5"
+              className="flex items-center gap-2.5 w-full pt-1.5 pb-0.5"
               onPointerDown={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <span className="text-[10px] font-medium text-white/50 tabular-nums shrink-0 min-w-[28px] text-right">
+              <span className="text-[11px] font-medium text-white/50 tabular-nums select-none shrink-0 min-w-[30px] text-right">
                 {formatTime(currentPosMs)}
               </span>
 
-              {/* Interactive Timeline Track */}
+              {/* Interactive Timeline Track with Live Drag-to-Seek */}
               <div
-                className="relative flex-1 h-[14px] flex items-center cursor-pointer group"
-                onClick={handleSeek}
+                className="relative flex-1 h-[18px] flex items-center cursor-pointer group select-none"
+                onPointerDown={handleScrubberPointerDown}
+                onPointerMove={handleScrubberPointerMove}
+                onPointerUp={handleScrubberPointerUp}
               >
-                <div className="h-[3px] group-hover:h-[5px] w-full bg-white/20 rounded-full overflow-hidden relative transition-all duration-150">
+                <div className="h-[4px] group-hover:h-[6px] w-full bg-white/20 rounded-full overflow-hidden relative transition-all duration-150">
                   <div
-                    className="h-full bg-[var(--accent-primary,#00f59b)] transition-[width] duration-100 ease-linear rounded-full"
+                    className="h-full bg-[var(--accent-primary,#00f59b)] transition-[width] duration-75 ease-linear rounded-full"
                     style={{ width: `${progressRatio * 100}%` }}
                   />
                 </div>
-                {/* Glowing Thumb on hover */}
+                {/* Glowing Thumb on hover or drag */}
                 <div
-                  className="absolute h-[10px] w-[10px] -ml-[5px] rounded-full bg-white shadow-[0_0_8px_rgba(0,245,155,0.8)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                  className={`absolute h-[11px] w-[11px] -ml-[5.5px] rounded-full bg-white shadow-[0_0_10px_rgba(0,245,155,0.9)] transition-opacity pointer-events-none ${
+                    isScrubbing ? "opacity-100 scale-110" : "opacity-0 group-hover:opacity-100"
+                  }`}
                   style={{ left: `${progressRatio * 100}%` }}
                 />
               </div>
 
-              <span className="text-[10px] font-medium text-white/50 tabular-nums shrink-0 min-w-[28px] text-left">
+              <span className="text-[11px] font-medium text-white/50 tabular-nums select-none shrink-0 min-w-[30px] text-left">
                 {formatTime(durationMs)}
               </span>
             </div>

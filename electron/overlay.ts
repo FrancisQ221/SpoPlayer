@@ -291,7 +291,7 @@ export class OverlayManager {
   private isExpanded = false;
 
   private getTargetHeight(): number {
-    return this.isExpanded ? 104 : 56;
+    return this.isExpanded ? 112 : 56;
   }
 
   private getWindowBounds(width?: number, height?: number) {
@@ -849,7 +849,7 @@ export class OverlayManager {
       if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return;
       this.isExpanded = Boolean(expanded);
       const targetWidth = this.isExpanded ? 480 : 320;
-      const targetHeight = this.isExpanded ? 104 : 56;
+      const targetHeight = this.isExpanded ? 112 : 56;
       const currentBounds = this.overlayWindow.getBounds();
       const centerX = currentBounds.x + currentBounds.width / 2;
       const newX = Math.round(centerX - targetWidth / 2);
