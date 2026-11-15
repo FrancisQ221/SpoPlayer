@@ -854,7 +854,7 @@ export default function AppFrame({ children }: AppFrameProps) {
             className="pointer-events-none absolute bottom-4 left-0 z-[55] flex justify-center px-4 transition-all duration-300"
             style={{ right: isRightDrawerOpen ? RIGHT_DRAWER_WIDTH : 0 }}
           >
-            <div className="pointer-events-auto flex justify-center">
+            <div className="pointer-events-auto w-full max-w-[880px]">
               <MiniPlayer
                 embedded
                 isEdgeToEdge={isEdgeToEdge}
