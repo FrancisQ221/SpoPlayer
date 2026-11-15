@@ -1,24 +1,16 @@
-import { memo } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Radio,
-  Sidebar,
   SkipNext,
   SkipPrevious,
   MaximizeSquare3,
-  TrashBin2,
-  Bookmark,
-  PlaybackSpeed,
   VolumeCross,
   VolumeSmall,
   VolumeLoud,
-  Repeat,
-  RepeatOne,
-  Shuffle,
+  Sidebar,
+  AltArrowDown,
 } from "@solar-icons/react";
-import { HeartFill, HeartLine, MoonLine, WaveLine, Filter2Line } from "@mingcute/react";
-import { SleepTimerPicker } from "./SleepTimerPicker";
+import { HeartFill, HeartLine } from "@mingcute/react";
 
 import {
   PlayerMorphIcon,
@@ -28,169 +20,16 @@ import {
 
 import { usePlayerState } from "../hooks/usePlayerState";
 import { playerEngine } from "../engine/playerEngine";
-import { isRadioContext, nextRepeatMode } from "../engine/radioMode";
-import Button from "@/shared/ui/Button";
-import SongCard from "./SongCard";
 import { useTranslation } from "@/languages";
 import { useIsTrackLiked, useLikeTrack, useUnlikeTrack } from "@/features/library/hooks";
-import { useModalStore } from "@/features/library";
-import { usePlayerStore } from "../store/playerStore";
-import { useEqualizerStore } from "../store/equalizerStore";
-import { toVolumeGain, toVolumeLevel } from "../engine/volume";
-import { VolumePicker } from "./VolumePicker";
-import { SpeedPitchPicker } from "./SpeedPitchPicker";
 import { TimelineSlider, formatPlaybackTime } from "./TimelineSlider";
 import { useTheme } from "next-themes";
 import { useCoverReady, CoverImage } from "@/features/covers";
 import { useCustomizationStore, getBlockStyle } from "@/features/settings";
 import ExplicitBadge from "@/shared/ui/ExplicitBadge";
 import { ArtistLink } from "@/features/artist";
-
-
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-  return [h, s, l];
-}
-
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  let r: number, g: number, b: number;
-  if (s === 0) {
-    r = g = b = l;
-  } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-}
-
-function extractColorsFromCanvas(
-  canvas: HTMLCanvasElement,
-  isLight = false,
-): {
-  accentColor: string;
-  accentColorSolid: string;
-} {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) {
-    return {
-      accentColor: "rgba(255, 255, 255, 0.12)",
-      accentColorSolid: "rgb(255, 255, 255)",
-    };
-  }
-
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  let totalWeight = 0;
-  let weightedR = 0;
-  let weightedG = 0;
-  let weightedB = 0;
-  let totalR = 0;
-  let totalG = 0;
-  let totalB = 0;
-  const count = data.length / 4;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    totalR += r;
-    totalG += g;
-    totalB += b;
-
-    const [, s, l] = rgbToHsl(r, g, b);
-    if (l > 0.08 && l < 0.95 && s > 0.1) {
-      const vibrancy = s * (1 - Math.abs(l - 0.5) * 1.5);
-      const weight = Math.max(0.01, vibrancy * vibrancy);
-      weightedR += r * weight;
-      weightedG += g * weight;
-      weightedB += b * weight;
-      totalWeight += weight;
-    }
-  }
-
-  let finalR = Math.round(totalWeight > 0.5 ? weightedR / totalWeight : totalR / count);
-  let finalG = Math.round(totalWeight > 0.5 ? weightedG / totalWeight : totalG / count);
-  let finalB = Math.round(totalWeight > 0.5 ? weightedB / totalWeight : totalB / count);
-
-  const [h, s, l] = rgbToHsl(finalR, finalG, finalB);
-
-  if (isLight) {
-    if (s < 0.12) {
-      return {
-        accentColor: "rgba(0, 0, 0, 0.045)",
-        accentColorSolid: "rgb(30, 30, 30)",
-      };
-    }
-    // Luminous vibrant tint for light theme card progress fill
-    const tintL = 0.50;
-    const tintS = Math.max(0.80, s);
-    const [tintR, tintG, tintB] = hslToRgb(h, tintS, tintL);
-
-    // Deep high-contrast tone for bottom timeline line
-    const solidL = Math.max(0.36, Math.min(0.46, l > 0.55 ? 0.40 : l));
-    const solidS = Math.max(0.75, s);
-    const [solidR, solidG, solidB] = hslToRgb(h, solidS, solidL);
-
-    return {
-      accentColor: `rgba(${tintR}, ${tintG}, ${tintB}, 0.09)`,
-      accentColorSolid: `rgb(${solidR}, ${solidG}, ${solidB})`,
-    };
-  }
-
-  // If mostly achromatic / monochrome (black, white, or gray cover)
-  if (s < 0.12) {
-    return {
-      accentColor: l < 0.5 ? "rgba(255, 255, 255, 0.14)" : "rgba(255, 255, 255, 0.09)",
-      accentColorSolid: "rgb(255, 255, 255)",
-    };
-  }
-
-  // Ensure high contrast and vibrant visibility on dark backgrounds
-  const solidL = Math.max(0.65, Math.min(0.82, l < 0.45 ? 0.70 : l));
-  const solidS = Math.max(0.70, s);
-  const [solidR, solidG, solidB] = hslToRgb(h, solidS, solidL);
-
-  const bgOpacity = l < 0.25 ? 0.22 : l < 0.5 ? 0.18 : 0.12;
-
-  return {
-    accentColor: `rgba(${solidR}, ${solidG}, ${solidB}, ${bgOpacity})`,
-    accentColorSolid: `rgb(${solidR}, ${solidG}, ${solidB})`,
-  };
-}
+import { toVolumeGain, toVolumeLevel } from "../engine/volume";
+import { VolumePicker } from "./VolumePicker";
 
 export interface MiniPlayerProps {
   onQueueOpenChange?: (open: boolean) => void;
@@ -204,8 +43,6 @@ function MiniPlayer({
   onQueueOpenChange,
   onQueueToggle,
   onFullscreenOpen,
-  embedded = false,
-  isEdgeToEdge = false,
 }: MiniPlayerProps) {
   const player = usePlayerState();
   const { t } = useTranslation();
@@ -214,132 +51,22 @@ function MiniPlayer({
     resolvedTheme
       ? resolvedTheme === "light"
       : typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "light";
-  const miniPlayerStyle = usePlayerStore((state) => state.miniPlayerStyle);
-  const usesRoundedStyle = !embedded && miniPlayerStyle === "rounded";
-  const usesBackgroundProgress = false;
+
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const backgroundImage = useCustomizationStore((state) => state.backgroundImage);
   const miniplayerConfig = useCustomizationStore((state) => state.miniplayer);
   const hasCustomBg = Boolean(backgroundImage && !isLight);
   const miniplayerCustomStyle = getBlockStyle(miniplayerConfig, !isLight, hasCustomBg);
-  const [accentColor, setAccentColor] = useState(
-    isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.12)",
-  );
-
-  const [accentColorSolid, setAccentColorSolid] = useState(
-    isLight ? "rgb(23, 23, 23)" : "rgb(255, 255, 255)",
-  );
-  const [contextAccentColorSolid, setContextAccentColorSolid] = useState(
-    isLight ? "rgb(23, 23, 23)" : "rgb(255, 255, 255)",
-  );
-
-  const coverUrl = player.currentTrack?.coverUrl || "";
-
-  useEffect(() => {
-    if (!player.playbackContextCover) {
-      return;
-    }
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return;
-        canvas.width = 64;
-        canvas.height = 64;
-        ctx.drawImage(img, 0, 0, 64, 64);
-        const { accentColorSolid: acs } = extractColorsFromCanvas(canvas, isLight);
-        setContextAccentColorSolid(acs);
-      } catch {
-        setContextAccentColorSolid(isLight ? "rgb(23, 23, 23)" : "rgb(255, 255, 255)");
-      }
-    };
-    img.src = player.playbackContextCover;
-  }, [player.playbackContextCover, isLight]);
-
-  useEffect(() => {
-    if (!coverUrl) {
-      setAccentColor(isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.12)");
-      setAccentColorSolid(isLight ? "rgb(23, 23, 23)" : "rgb(255, 255, 255)");
-      return;
-    }
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0, 64, 64);
-        const { accentColor: ac, accentColorSolid: acs } = extractColorsFromCanvas(canvas, isLight);
-        setAccentColor(ac);
-        setAccentColorSolid(acs);
-      } catch {
-        setAccentColor(isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.12)");
-        setAccentColorSolid(isLight ? "rgb(23, 23, 23)" : "rgb(255, 255, 255)");
-      }
-    };
-    img.src = coverUrl;
-  }, [coverUrl, isLight]);
-
-  const extractAccentColor = useCallback((img: HTMLImageElement) => {
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0, 64, 64);
-      const { accentColor: ac, accentColorSolid: acs } = extractColorsFromCanvas(canvas, isLight);
-      setAccentColor(ac);
-      setAccentColorSolid(acs);
-    } catch {
-      setAccentColor(isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.12)");
-      setAccentColorSolid(isLight ? "rgb(23, 23, 23)" : "rgb(255, 255, 255)");
-    }
-  }, [isLight]);
-
-  const [queueLimit, setQueueLimit] = useState(50);
-  const [volumeOpen, setVolumeOpen] = useState(false);
-  const [volumePopupStyle, setVolumePopupStyle] = useState<React.CSSProperties>(
-    { bottom: 52 },
-  );
-  const [speedOpen, setSpeedOpen] = useState(false);
-  const [speedPopupStyle, setSpeedPopupStyle] = useState<React.CSSProperties>(
-    {},
-  );
-  const sleepTimerOpen = useModalStore((state) => state.sleepTimerOpen);
-  const closeSleepTimer = useModalStore((state) => state.closeSleepTimer);
-  const toggleSleepTimer = useModalStore((state) => state.toggleSleepTimer);
-  const openZenVisualizer = useModalStore((state) => state.openZenVisualizer);
-  const openEqualizer = useModalStore((state) => state.openEqualizer);
-  const eqEnabled = useEqualizerStore((state) => state.enabled);
-  const [sleepTimerPopupStyle, setSleepTimerPopupStyle] = useState<React.CSSProperties>({});
-  const sleepTimerType = usePlayerStore((state) => state.sleepTimerType);
-  const miniPlayerRootRef = useRef<HTMLDivElement>(null);
-  const queuePopupRef = useRef<HTMLDivElement>(null);
-  const volumePopupRef = useRef<HTMLDivElement>(null);
-  const volumeToggleRef = useRef<HTMLButtonElement>(null);
-  const speedPopupRef = useRef<HTMLDivElement>(null);
-  const speedToggleRef = useRef<HTMLButtonElement>(null);
-  const sleepTimerPopupRef = useRef<HTMLDivElement>(null);
-  const sleepTimerToggleRef = useRef<HTMLButtonElement>(null);
-  const volumeHoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const [isVolumeDragging, setIsVolumeDragging] = useState(false);
-  const lastNonZeroVolumeRef = useRef<number>(0.7);
 
   const currentTrack = player.currentTrack;
-  const volumeLevel = toVolumeLevel(player.volume);
   const isLiked = useIsTrackLiked(currentTrack?.id);
   const likeMutation = useLikeTrack();
   const unlikeMutation = useUnlikeTrack();
   const togglingRef = useRef(false);
 
-  const handleLikeToggle = useCallback(() => {
+  const handleLikeToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!currentTrack || togglingRef.current) return;
     togglingRef.current = true;
     const onSettled = () => {
@@ -356,10 +83,6 @@ function MiniPlayer({
     player.durationMs > 0
       ? player.durationMs
       : (player.currentTrack?.durationMs ?? 0);
-  const progress =
-    durationMs > 0
-      ? Math.min(1, Math.max(0, player.positionMs / durationMs))
-      : 0;
 
   const isPlaying = player.status === "playing";
   const isLoading = player.status === "loading";
@@ -367,70 +90,17 @@ function MiniPlayer({
   const trackArtists =
     player.currentTrack?.artists ?? t("player.choose_track");
 
+  const coverUrl = player.currentTrack?.coverUrl || "";
   const isCoverLoaded = useCoverReady(coverUrl);
 
-  const queueItems = useMemo(() => {
-    return player.queue.slice(0, queueLimit).map((item, index) => {
-      const isCurrent = index === player.currentIndex;
-      return (
-        <SongCard
-          key={`${item.id}-${index}`}
-          title={item.title}
-          artists={item.artists}
-          artistId={item.artistId}
-          artistList={item.artistList}
-          coverUrl={item.coverUrl || ""}
-          duration={
-            item.durationMs
-              ? `${Math.floor(item.durationMs / 60000)}:${Math.floor(
-                  (item.durationMs % 60000) / 1000,
-                )
-                  .toString()
-                  .padStart(2, "0")}`
-              : undefined
-          }
-          explicit={item.explicit}
-          onPlay={() => {
-            void playerEngine.playTrack(
-              item,
-              player.queue,
-              player.playbackContext,
-              player.playbackContextCover,
-              index,
-              true,
-            );
-          }}
-          className={`rounded-[12px] px-[8px] py-[10px] text-left transition-all duration-200 ${
-            isCurrent
-              ? "bg-black/[0.065] dark:bg-white/[0.08]"
-              : "bg-transparent hover:bg-black/[0.035] dark:hover:bg-white/[0.04]"
-          }`}
-        />
-      );
-    });
-  }, [
-    player.queue,
-    queueLimit,
-    player.currentIndex,
-    player.playbackContext,
-    player.playbackContextCover,
-  ]);
-
-  // off -> all (loop the whole queue/playlist) -> one (loop the track) -> off
-  const repeatIcon = useMemo(() => {
-    if (player.repeat === "one") return <RepeatOne size={18} weight="Outline" />;
-    return <Repeat size={18} weight="Outline" />;
-  }, [player.repeat]);
-  const repeatLabel = t(`player.repeat_${player.repeat}`);
-
-  // "on" state for the shuffle / repeat toggles: the hover tint, but opaque, so the
-  // progress fill sliding underneath never changes it. Values are the hover tint
-  // pre-composited over the toolbox on bg-primary (dark #0a0a0a, light #f5f5f7).
-  // The toolbox pill itself is the opaque bg-toolbox equivalent for the same reason.
-  const activeToggleClass = "!bg-[#dfdfe1] dark:!bg-[#292929] !text-text-primary";
-
-  const iconButtonClass =
-    "inline-flex h-[30px] w-[30px] items-center justify-center rounded-md text-text-secondary transition-colors duration-150 hover:bg-black/[0.05] dark:hover:bg-white/[0.09] hover:text-text-primary active:scale-[0.96] border-none bg-transparent cursor-pointer";
+  // Volume popover for expanded state
+  const [volumeOpen, setVolumeOpen] = useState(false);
+  const [isVolumeDragging, setIsVolumeDragging] = useState(false);
+  const volumeToggleRef = useRef<HTMLButtonElement>(null);
+  const volumePopupRef = useRef<HTMLDivElement>(null);
+  const volumeHoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastNonZeroVolumeRef = useRef<number>(0.7);
+  const volumeLevel = toVolumeLevel(player.volume);
 
   const clearVolumeHoverTimer = useCallback(() => {
     if (volumeHoverCloseTimerRef.current) {
@@ -439,45 +109,16 @@ function MiniPlayer({
     }
   }, []);
 
-  const updateVolumePopupPosition = useCallback(() => {
-    const toggle = volumeToggleRef.current;
-    const root = miniPlayerRootRef.current;
-    if (!toggle || !root) return;
-    const toggleRect = toggle.getBoundingClientRect();
-    const rootRect = root.getBoundingClientRect();
-    const bar =
-      toggle.closest<HTMLElement>(".bg-bg-toolbox") || toggle.parentElement;
-    const barRect = bar?.getBoundingClientRect();
-
-    const popupW = 38;
-    const btnW = toggleRect.width;
-    const right = rootRect.right - toggleRect.right + (btnW - popupW) / 2;
-    const targetTop = barRect ? barRect.top : toggleRect.top;
-    const bottom = rootRect.bottom - targetTop + 2;
-
-    setVolumePopupStyle({
-      right: Math.max(8, right),
-      bottom: Math.round(bottom),
-    });
-  }, []);
-
-  const handleVolumeMouseEnter = useCallback(() => {
-    clearVolumeHoverTimer();
-    updateVolumePopupPosition();
-    setSpeedOpen(false);
-    setVolumeOpen(true);
-  }, [clearVolumeHoverTimer, updateVolumePopupPosition]);
-
   const handleVolumeMouseLeave = useCallback(() => {
     clearVolumeHoverTimer();
-    // Keep open while user is actively dragging the slider
     if (isVolumeDragging) return;
     volumeHoverCloseTimerRef.current = setTimeout(() => {
       setVolumeOpen(false);
-    }, 140);
+    }, 150);
   }, [clearVolumeHoverTimer, isVolumeDragging]);
 
-  const handleToggleMute = useCallback(() => {
+  const handleToggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
     if (volumeLevel > 0) {
       lastNonZeroVolumeRef.current = volumeLevel;
       playerEngine.setVolume(0);
@@ -487,460 +128,143 @@ function MiniPlayer({
     }
   }, [volumeLevel]);
 
-  const handleVolumeWheel = useCallback(
-    (e: React.WheelEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.04 : -0.04;
-      const nextLevel = Math.min(1, Math.max(0, volumeLevel + delta));
-      playerEngine.setVolume(toVolumeGain(nextLevel));
-      setVolumeOpen(true);
-      clearVolumeHoverTimer();
-      volumeHoverCloseTimerRef.current = setTimeout(() => {
-        setVolumeOpen(false);
-      }, 1200);
-    },
-    [clearVolumeHoverTimer, volumeLevel],
-  );
-
-  const handleVolumeDraggingChange = useCallback((dragging: boolean) => {
-    setIsVolumeDragging(dragging);
+  // Click handler on mini reproductor:
+  // "al presionar cualquier parte del minireproductor (que no sea los botones de pausa, adelante y atrÃ¡s) se expanda"
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    // Do not toggle if click originated from interactive elements
+    if (
+      target.closest("[data-no-toggle]") ||
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("a")
+    ) {
+      return;
+    }
+    setIsExpanded((prev) => !prev);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      clearVolumeHoverTimer();
-    };
-  }, [clearVolumeHoverTimer]);
-
-  useEffect(() => {
-    if (!volumeOpen) return;
-    updateVolumePopupPosition();
-  }, [volumeOpen, updateVolumePopupPosition]);
-
-  useEffect(() => {
-    if (!speedOpen) return;
-    const toggle = speedToggleRef.current;
-    const root = miniPlayerRootRef.current;
-    if (!toggle || !root) return;
-    const toggleRect = toggle.getBoundingClientRect();
-    const rootRect = root.getBoundingClientRect();
-    const popupW = 270;
-    const btnW = toggleRect.width;
-    const right = rootRect.right - toggleRect.right + (btnW - popupW) / 2;
-    setSpeedPopupStyle({ right: Math.max(8, right) });
-  }, [speedOpen]);
-
-  useEffect(() => {
-    if (!sleepTimerOpen) return;
-    const toggle = sleepTimerToggleRef.current;
-    const root = miniPlayerRootRef.current;
-    if (!toggle || !root) return;
-    const toggleRect = toggle.getBoundingClientRect();
-    const rootRect = root.getBoundingClientRect();
-    const popupW = 260;
-    const btnW = toggleRect.width;
-    const right = rootRect.right - toggleRect.right + (btnW - popupW) / 2;
-    setSleepTimerPopupStyle({ right: Math.max(8, right) });
-  }, [sleepTimerOpen]);
-
-  useEffect(() => {
-    const onDocumentPointerDown = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (!target) {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("button") || target?.closest("input") || target?.closest("a")) {
         return;
       }
-
-      if (volumeOpen) {
-        const clickedVolumePopup = volumePopupRef.current?.contains(target);
-        const clickedVolumeToggle =
-          volumeToggleRef.current?.contains(target);
-        if (!clickedVolumePopup && !clickedVolumeToggle) {
-          clearVolumeHoverTimer();
-          setVolumeOpen(false);
-        }
-      }
-
-      if (speedOpen) {
-        const clickedSpeedPopup = speedPopupRef.current?.contains(target);
-        const clickedSpeedToggle =
-          speedToggleRef.current?.contains(target);
-        if (!clickedSpeedPopup && !clickedSpeedToggle) {
-          setSpeedOpen(false);
-        }
-      }
-
-      if (sleepTimerOpen) {
-        const clickedSleepPopup = sleepTimerPopupRef.current?.contains(target);
-        const clickedSleepToggle = sleepTimerToggleRef.current?.contains(target);
-        if (!clickedSleepPopup && !clickedSleepToggle) {
-          closeSleepTimer();
-        }
-      }
-    };
-
-    const onDocumentKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (volumeOpen) {
-          event.preventDefault();
-          event.stopPropagation();
-          clearVolumeHoverTimer();
-          setVolumeOpen(false);
-        }
-        if (speedOpen) {
-          event.preventDefault();
-          event.stopPropagation();
-          setSpeedOpen(false);
-        }
-        if (sleepTimerOpen) {
-          event.preventDefault();
-          event.stopPropagation();
-          closeSleepTimer();
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", onDocumentPointerDown, true);
-    document.addEventListener("keydown", onDocumentKeyDown, true);
-    return () => {
-      document.removeEventListener("mousedown", onDocumentPointerDown, true);
-      document.removeEventListener("keydown", onDocumentKeyDown, true);
-    };
-  }, [clearVolumeHoverTimer, speedOpen, sleepTimerOpen, volumeOpen]);
-
-  const [scrubRatio, setScrubRatio] = useState<number | null>(null);
-  const activeProgress = scrubRatio !== null ? scrubRatio : progress;
+      e.preventDefault();
+      setIsExpanded((prev) => !prev);
+    }
+  }, []);
 
   return (
-    <div
-      ref={miniPlayerRootRef}
-      className="relative h-[68px] w-full select-none"
+    <motion.div
+      layout
+      transition={{ type: "spring", stiffness: 420, damping: 32 }}
+      onClick={handleContainerClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="region"
+      aria-label={isExpanded ? "Mini reproductor expandido" : "Mini reproductor compacto"}
+      title={isExpanded ? "Haz clic para contraer" : "Haz clic para expandir"}
+      className={`relative select-none overflow-hidden transition-colors cursor-pointer outline-none ${
+        isExpanded
+          ? "w-[580px] max-w-[calc(100vw-32px)] rounded-[26px] p-[10px]"
+          : "w-[390px] max-w-[calc(100vw-32px)] h-[54px] rounded-full px-[10px] py-[7px]"
+      } ${
+        hasCustomBg
+          ? "backdrop-blur-2xl bg-black/70 border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.65)]"
+          : isLight
+            ? "backdrop-blur-2xl bg-white/95 border border-black/10 shadow-[0_12px_36px_rgba(0,0,0,0.14)]"
+            : "backdrop-blur-2xl bg-[#0e1612]/95 border border-white/10 dark:border-[var(--accent-primary,#00f59b)]/30 shadow-[0_16px_40px_rgba(0,0,0,0.65)]"
+      }`}
+      style={miniplayerCustomStyle}
     >
-      <AnimatePresence>
-        {volumeOpen && (
-          <motion.div
-            key="volume-popup"
-            ref={volumePopupRef}
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.96 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-[52px] z-[99] w-[38px] rounded-xl bg-bg-surface/90 dark:bg-[#161618]/95 backdrop-blur-2xl pt-[6px] pb-[8px] px-[4px] shadow-[0_8px_24px_rgba(0,0,0,0.14)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.5)] prevent-seek"
-            style={volumePopupStyle}
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseEnter={clearVolumeHoverTimer}
-            onMouseLeave={handleVolumeMouseLeave}
-          >
-            {/* Seamless invisible hit zone bridging popup and toggle button */}
-            <div className="absolute -inset-x-3 -bottom-[22px] top-0 pointer-events-auto" />
-
-            <VolumePicker
-              orientation="vertical"
-              showValue
-              showIcon={false}
-              onDraggingChange={handleVolumeDraggingChange}
-              trackClassName="bg-black/[0.08] dark:bg-white/[0.12]"
-              fillClassName="bg-text-primary dark:bg-white"
+      {/* ================= COMPACT STATE (IMAGE 1) ================= */}
+      {!isExpanded && (
+        <motion.div
+          key="compact-view"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="flex h-full w-full items-center justify-between gap-[10px]"
+        >
+          {/* Left: Album cover */}
+          <div className="relative h-[40px] w-[40px] shrink-0 overflow-hidden rounded-[10px] bg-bg-elevated shadow-sm">
+            <CoverImage
+              key={coverUrl}
+              src={coverUrl}
+              alt={trackTitle}
+              width={40}
+              height={40}
+              priority
+              draggable={false}
+              className={`h-[40px] w-[40px] object-cover rounded-[10px] ${
+                coverUrl && !isCoverLoaded ? "animate-pulse" : ""
+              }`}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {speedOpen && (
-          <motion.div
-            key="speed-popup"
-            ref={speedPopupRef}
-            initial={{ opacity: 0, y: 10, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.985 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute bottom-[74px] z-[92] w-[270px] rounded-xl bg-bg-primary border border-border-primary/50 p-[12px] shadow-2xl prevent-seek"
-            style={speedPopupStyle}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <SpeedPitchPicker onClose={() => setSpeedOpen(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {sleepTimerOpen && (
-          <motion.div
-            key="sleep-timer-popup"
-            ref={sleepTimerPopupRef}
-            initial={{ opacity: 0, y: 10, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.985 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute bottom-[74px] z-[92] w-[260px] rounded-2xl bg-bg-primary border border-border-primary/50 p-[14px] shadow-2xl prevent-seek"
-            style={sleepTimerPopupStyle}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <SleepTimerPicker onClose={closeSleepTimer} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div
-        className={`relative h-[68px] w-full overflow-hidden select-none rounded-2xl border border-white/10 dark:border-[var(--accent-primary,#00f59b)]/25 shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ${
-          hasCustomBg
-            ? "backdrop-blur-2xl bg-black/60"
-            : isLight
-              ? "backdrop-blur-xl bg-white/90 shadow-[0_12px_32px_rgba(0,0,0,0.12)] border-black/10"
-              : "backdrop-blur-xl bg-[#0e1612]/95"
-        }`}
-        style={miniplayerCustomStyle}
-      >
-        {/* Sleek, easy-to-understand progress line at the top edge */}
-        <div
-          className="absolute z-30 inset-x-0 -top-[2px] h-[14px] flex items-center cursor-pointer prevent-seek"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <TimelineSlider
-            positionMs={player.positionMs}
-            durationMs={durationMs}
-            onSeek={(pos) => playerEngine.seek(pos)}
-            size="xs"
-            fillColor="var(--accent-primary, #00f59b)"
-            trackBg={isLight ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.15)"}
-            trackActiveBg={isLight ? "rgba(0, 0, 0, 0.22)" : "rgba(255, 255, 255, 0.28)"}
-            className="w-full !h-full"
-            showThumb
-            showTooltip
-          />
-        </div>
-
-        <div
-          className={`relative grid h-full pointer-events-none ${
-            embedded
-              ? "grid-cols-[280px_minmax(0,1fr)_320px]"
-              : "grid-cols-[286px_minmax(0,1fr)]"
-          }`}
-        >
-          <div className="flex h-full items-center gap-[16px] px-[18px] pt-[1px] pointer-events-none cursor-default">
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Open player"
-              className="relative group h-[38px] w-[38px] shrink-0 overflow-visible cursor-pointer pointer-events-auto prevent-seek"
-              onClick={onFullscreenOpen}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              {isPlaying && (
-                <div className="absolute -inset-1 rounded-xl bg-[var(--accent-primary,#00f59b)]/30 blur-md pointer-events-none transition-all duration-300 group-hover:bg-[var(--accent-primary,#00f59b)]/50" />
-              )}
-              <div
-                className={`relative h-[38px] w-[38px] shrink-0 overflow-hidden rounded-[8px] bg-bg-elevated transition-transform duration-200 group-hover:scale-105 ${
-                  coverUrl && !isCoverLoaded ? "animate-pulse" : ""
-                }`}
-              >
-                <CoverImage
-                  key={coverUrl}
-                  src={coverUrl}
-                  alt="Track artwork"
-                  width={38}
-                  height={38}
-                  priority
-                  draggable={false}
-                  onLoad={(e) => {
-                    extractAccentColor(e.currentTarget as HTMLImageElement);
-                  }}
-                  className="h-[38px] w-[38px] object-cover rounded-[8px]"
-                />
-                {isPlaying && (
-                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center gap-[2.5px] pb-[7px] pointer-events-none transition-opacity duration-200">
-                    <span className="spoplayer-eq-bar" />
-                    <span className="spoplayer-eq-bar" />
-                    <span className="spoplayer-eq-bar" />
-                    <span className="spoplayer-eq-bar" />
-                  </div>
-                )}
+            {isPlaying && (
+              <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-end justify-center gap-[2px] pb-[6px] pointer-events-none">
+                <span className="spoplayer-eq-bar" />
+                <span className="spoplayer-eq-bar" />
+                <span className="spoplayer-eq-bar" />
               </div>
-            </div>
-            <div className="flex min-w-0 flex-col pointer-events-none">
-              <p
-                className="m-0 truncate text-[16px] font-[400] text-text-primary flex items-center gap-[6px] pointer-events-none"
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  lineHeight: "18px",
-                  letterSpacing: "0",
-                }}
-              >
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Open player"
-                  className="min-w-0 truncate cursor-pointer pointer-events-auto prevent-seek"
-                  onClick={onFullscreenOpen}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      onFullscreenOpen?.();
-                    }
-                  }}
-                >
-                  {trackTitle}
-                </span>
-              </p>
-              <p
-                className="m-0 mt-[4px] flex min-w-0 items-center gap-[5px] text-[13px] font-[300] text-text-tertiary pointer-events-none"
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  lineHeight: "15px",
-                }}
-              >
-                {player.currentTrack?.explicit && <ExplicitBadge />}
-                <ArtistLink
-                  name={trackArtists}
-                  artistId={player.currentTrack?.artistId}
-                  artistList={player.currentTrack?.artistList}
-                  className="text-text-tertiary pointer-events-auto"
-                />
-              </p>
-            </div>
-            <button
-              type="button"
-              aria-label={isLiked ? "Unlike" : "Like"}
-              className={`${iconButtonClass} shrink-0 transition-all duration-200 pointer-events-auto prevent-seek active:scale-90 ${
-                isLiked ? "text-[var(--accent-primary,#00f59b)] drop-shadow-[0_0_8px_rgba(0,245,155,0.45)]" : "text-text-secondary hover:text-text-primary"
-              }`}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={handleLikeToggle}
-              style={{ cursor: "pointer" }}
+            )}
+          </div>
+
+          {/* Middle: Truncated Title & Artist */}
+          <div className="flex flex-1 min-w-0 flex-col justify-center">
+            <span
+              className="truncate text-[13px] font-semibold text-text-primary leading-tight"
+              title={trackTitle}
             >
-              {isLiked ? <HeartFill size={20} /> : <HeartLine size={20} />}
-            </button>
+              {trackTitle}
+            </span>
+            <span
+              className="truncate text-[11px] font-normal text-text-tertiary leading-tight mt-[2px]"
+              title={trackArtists}
+            >
+              {trackArtists}
+            </span>
           </div>
 
+          {/* Right: Controls (Previous, Play/Pause, Next) */}
           <div
-            className={`flex h-full items-center pl-[10px] pr-[16px] pointer-events-none ${
-              embedded ? "col-start-3" : ""
-            }`}
-          >
-            <div className="ml-auto flex items-center gap-[12px] pointer-events-auto">
-              <span className="text-[12px] font-medium text-text-tertiary tabular-nums select-none tracking-tight">
-                {formatPlaybackTime(player.positionMs)} / {formatPlaybackTime(durationMs)}
-              </span>
-              <div
-                className="flex items-center gap-[4px] rounded-lg bg-[#ebebed] dark:bg-[#141414] p-[3px] pointer-events-auto prevent-seek cursor-default"
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-              <button
-                ref={volumeToggleRef}
-                type="button"
-                aria-label="Volume"
-                className={`${iconButtonClass} ${
-                  volumeOpen ? "bg-bg-toolbox-active text-text-primary" : ""
-                }`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseEnter={handleVolumeMouseEnter}
-                onMouseLeave={handleVolumeMouseLeave}
-                onWheel={handleVolumeWheel}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQueueOpenChange?.(false);
-                  handleToggleMute();
-                  setVolumeOpen(true);
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                {volumeLevel === 0 ? (
-                  <VolumeCross size={18} weight="Outline" />
-                ) : volumeLevel < 0.33 ? (
-                  <VolumeSmall size={18} weight="Outline" />
-                ) : (
-                  <VolumeLoud size={18} weight="Outline" />
-                )}
-              </button>
-              <button
-                type="button"
-                aria-label={t("player.open_player")}
-                title={t("player.open_player")}
-                className={iconButtonClass}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setVolumeOpen(false);
-                  onFullscreenOpen?.();
-                }}
-              >
-                <MaximizeSquare3 size={18} weight="Outline" />
-              </button>
-              <span
-                className="mx-[2px] h-[16px] w-px bg-border-toolbox-divider"
-                aria-hidden="true"
-              />
-              <button
-                type="button"
-                aria-label={t("player.queue")}
-                title={t("player.queue")}
-                className={iconButtonClass}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setVolumeOpen(false);
-                  setQueueLimit(50);
-                  onQueueToggle?.();
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <Sidebar size={20} weight="Bold" />
-              </button>
-            </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div
-            className="pointer-events-auto flex items-center gap-[10px] prevent-seek cursor-default"
+            data-no-toggle="true"
+            className="flex items-center gap-[6px] shrink-0 pointer-events-auto cursor-default"
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              aria-label="Shuffle"
-              title={player.shuffle ? t("player.shuffle_on") : t("player.shuffle_off")}
-              className={`${iconButtonClass} ${
-                player.shuffle ? activeToggleClass : ""
-              }`}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => playerEngine.setShuffle(!player.shuffle)}
-            >
-              <Shuffle size={18} weight="Outline" />
-            </button>
             <button
               type="button"
               aria-label="Previous track"
-              className={`${iconButtonClass} text-text-secondary hover:text-text-primary`}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => {
+              title="Anterior"
+              data-no-toggle="true"
+              className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition-all border-none bg-transparent cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
                 void playerEngine.skipPrevious();
               }}
-              style={{ cursor: "pointer" }}
             >
               <SkipPrevious size={18} weight="Bold" />
             </button>
+
             <button
               type="button"
               aria-label={isPlaying ? "Pause" : "Play"}
-              className="inline-flex h-[36px] w-[36px] items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text transition-all duration-150 ease-out hover:scale-110 active:scale-[0.93] border-none cursor-pointer shadow-[0_0_16px_rgba(0,245,155,0.35)] hover:shadow-[0_0_24px_rgba(0,245,155,0.6)]"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => {
+              title={isPlaying ? "Pausar" : "Reproducir"}
+              data-no-toggle="true"
+              className="inline-flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[var(--accent-primary,#00f59b)] text-black shadow-[0_0_14px_rgba(0,245,155,0.4)] hover:shadow-[0_0_20px_rgba(0,245,155,0.6)] hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
                 void playerEngine.togglePlayPause();
               }}
-              style={{ cursor: "pointer" }}
             >
-              {/* keep the morph icon mounted through the loading state
-                  (spinner overlays it) â€” swapping it out on "loading" would
-                  remount MorphIcon when the track starts, which skips the
-                  play -> pause morph animation. */}
               <span className="relative flex h-[16px] w-[16px] items-center justify-center">
                 <span
                   className={`absolute inset-0 flex items-center justify-center ${
                     isLoading ? "opacity-0" : ""
-                  } transition-transform ${
-                    isPlaying ? "" : "translate-x-[0.5px]"
-                  }`}
+                  } ${isPlaying ? "" : "translate-x-[0.5px]"}`}
                 >
                   <PlayerMorphIcon
                     icon={isPlaying ? ICON_PAUSE : ICON_PLAY}
@@ -950,48 +274,230 @@ function MiniPlayer({
                 {isLoading && (
                   <span
                     className="absolute h-[16px] w-[16px] animate-spin rounded-full border-[2px] border-current border-t-transparent"
-                    aria-label="Loading playback"
+                    aria-label="Cargando"
                   />
                 )}
               </span>
             </button>
+
             <button
               type="button"
               aria-label="Next track"
-              className={`${iconButtonClass} text-text-secondary hover:text-text-primary`}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => {
+              title="Siguiente"
+              data-no-toggle="true"
+              className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition-all border-none bg-transparent cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
                 void playerEngine.skipNext();
               }}
-              style={{ cursor: "pointer" }}
             >
               <SkipNext size={18} weight="Bold" />
             </button>
-            <button
-              type="button"
-              aria-label={repeatLabel}
-              title={repeatLabel}
-              className={`${iconButtonClass} ${
-                player.repeat !== "off" ? activeToggleClass : ""
-              }`}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() =>
-                playerEngine.setRepeat(
-                  // radio has no repeat-all: it refills instead of looping
-                  nextRepeatMode(player.repeat, isRadioContext(player.playbackContext)),
-                )
-              }
-            >
-              {repeatIcon}
-            </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      )}
+
+      {/* ================= EXPANDED STATE (IMAGE 3) ================= */}
+      {isExpanded && (
+        <motion.div
+          key="expanded-view"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="flex flex-col w-full"
+        >
+          {/* Top row: Cover (larger), Title & Artist (maximum space), Controls (larger) */}
+          <div className="flex items-center gap-[14px] px-[6px] pt-[2px] pb-[8px]">
+            {/* Larger Cover */}
+            <div
+              className="relative h-[58px] w-[58px] shrink-0 overflow-hidden rounded-[14px] bg-bg-elevated shadow-md"
+              title={trackTitle}
+            >
+              <CoverImage
+                key={coverUrl}
+                src={coverUrl}
+                alt={trackTitle}
+                width={58}
+                height={58}
+                priority
+                draggable={false}
+                className={`h-[58px] w-[58px] object-cover rounded-[14px] ${
+                  coverUrl && !isCoverLoaded ? "animate-pulse" : ""
+                }`}
+              />
+              {isPlaying && (
+                <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-end justify-center gap-[2.5px] pb-[8px] pointer-events-none">
+                  <span className="spoplayer-eq-bar" />
+                  <span className="spoplayer-eq-bar" />
+                  <span className="spoplayer-eq-bar" />
+                  <span className="spoplayer-eq-bar" />
+                </div>
+              )}
+            </div>
+
+            {/* Maximum Title & Artist Space */}
+            <div className="flex flex-1 min-w-0 flex-col justify-center pr-2">
+              <span
+                className="truncate text-[16px] font-bold text-text-primary tracking-tight leading-tight"
+                title={trackTitle}
+              >
+                {trackTitle}
+              </span>
+              <div className="truncate text-[13px] font-medium text-text-secondary leading-tight mt-[4px] flex items-center gap-[5px]">
+                {player.currentTrack?.explicit && <ExplicitBadge />}
+                <span title={trackArtists}>{trackArtists}</span>
+              </div>
+            </div>
+
+            {/* Larger Control Buttons */}
+            <div
+              data-no-toggle="true"
+              className="flex items-center gap-[8px] shrink-0 pointer-events-auto cursor-default"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label="Previous track"
+                title="Anterior"
+                data-no-toggle="true"
+                className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition-all border-none bg-transparent cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void playerEngine.skipPrevious();
+                }}
+              >
+                <SkipPrevious size={22} weight="Bold" />
+              </button>
+
+              <button
+                type="button"
+                aria-label={isPlaying ? "Pause" : "Play"}
+                title={isPlaying ? "Pausar" : "Reproducir"}
+                data-no-toggle="true"
+                className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[var(--accent-primary,#00f59b)] text-black shadow-[0_0_18px_rgba(0,245,155,0.45)] hover:shadow-[0_0_26px_rgba(0,245,155,0.65)] hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void playerEngine.togglePlayPause();
+                }}
+              >
+                <span className="relative flex h-[20px] w-[20px] items-center justify-center">
+                  <span
+                    className={`absolute inset-0 flex items-center justify-center ${
+                      isLoading ? "opacity-0" : ""
+                    } ${isPlaying ? "" : "translate-x-[0.5px]"}`}
+                  >
+                    <PlayerMorphIcon
+                      icon={isPlaying ? ICON_PAUSE : ICON_PLAY}
+                      size={20}
+                    />
+                  </span>
+                  {isLoading && (
+                    <span
+                      className="absolute h-[20px] w-[20px] animate-spin rounded-full border-[2.5px] border-current border-t-transparent"
+                      aria-label="Cargando"
+                    />
+                  )}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                aria-label="Next track"
+                title="Siguiente"
+                data-no-toggle="true"
+                className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition-all border-none bg-transparent cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void playerEngine.skipNext();
+                }}
+              >
+                <SkipNext size={22} weight="Bold" />
+              </button>
+
+              {/* Utility buttons: Like, Fullscreen, Collapse */}
+              <span className="mx-[2px] h-[20px] w-px bg-white/10 dark:bg-white/15" aria-hidden="true" />
+
+              <button
+                type="button"
+                aria-label={isLiked ? "Unlike" : "Like"}
+                title={isLiked ? "Quitar de favoritos" : "Guardar en favoritos"}
+                data-no-toggle="true"
+                className={`inline-flex h-[32px] w-[32px] items-center justify-center rounded-full transition-all border-none bg-transparent cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 ${
+                  isLiked
+                    ? "text-[var(--accent-primary,#00f59b)] drop-shadow-[0_0_8px_rgba(0,245,155,0.45)]"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+                onClick={handleLikeToggle}
+              >
+                {isLiked ? <HeartFill size={18} /> : <HeartLine size={18} />}
+              </button>
+
+              <button
+                type="button"
+                aria-label={t("player.open_player")}
+                title="Pantalla completa"
+                data-no-toggle="true"
+                className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition-all border-none bg-transparent cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFullscreenOpen?.();
+                }}
+              >
+                <MaximizeSquare3 size={18} weight="Outline" />
+              </button>
+
+              <button
+                type="button"
+                aria-label="Contraer"
+                title="Contraer mini reproductor"
+                data-no-toggle="true"
+                className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 transition-all border-none bg-transparent cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(false);
+                }}
+              >
+                <AltArrowDown size={18} weight="Outline" />
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom row: Playback line with timestamps [1:00 ~~~~~ 4:00] (IMAGE 3) */}
+          <div
+            data-no-toggle="true"
+            className="flex items-center gap-[10px] px-[8px] pt-[2px] pb-[4px] w-full pointer-events-auto cursor-default"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <span className="text-[11px] font-medium text-text-tertiary tabular-nums select-none shrink-0 min-w-[34px] text-right">
+              {formatPlaybackTime(player.positionMs)}
+            </span>
+
+            <div className="flex-1 flex items-center h-[20px]">
+              <TimelineSlider
+                positionMs={player.positionMs}
+                durationMs={durationMs}
+                onSeek={(pos) => playerEngine.seek(pos)}
+                size="sm"
+                fillColor="var(--accent-primary, #00f59b)"
+                trackBg={isLight ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.16)"}
+                trackActiveBg={isLight ? "rgba(0, 0, 0, 0.22)" : "rgba(255, 255, 255, 0.28)"}
+                className="w-full"
+                showThumb
+                showTooltip
+              />
+            </div>
+
+            <span className="text-[11px] font-medium text-text-tertiary tabular-nums select-none shrink-0 min-w-[34px] text-left">
+              {formatPlaybackTime(durationMs)}
+            </span>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 
 export default memo(MiniPlayer);
-
-
-

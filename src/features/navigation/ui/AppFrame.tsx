@@ -854,7 +854,7 @@ export default function AppFrame({ children }: AppFrameProps) {
             className="pointer-events-none absolute bottom-4 left-0 z-[55] flex justify-center px-4 transition-all duration-300"
             style={{ right: isRightDrawerOpen ? RIGHT_DRAWER_WIDTH : 0 }}
           >
-            <div className="pointer-events-auto w-full max-w-[880px]">
+            <div className="pointer-events-auto flex justify-center">
               <MiniPlayer
                 embedded
                 isEdgeToEdge={isEdgeToEdge}
@@ -1139,9 +1139,8 @@ export default function AppFrame({ children }: AppFrameProps) {
       <WindowControls
         isFullscreen={isFullscreenPlayer}
         style={{
-          top: isFullscreenPlayer || isEdgeToEdge ? 12 : 18,
-          right: isFullscreenPlayer || isEdgeToEdge ? 12 : 18,
-          transition: "all 0.28s cubic-bezier(0.22, 1, 0.36, 1)",
+          top: 0,
+          right: 0,
           zIndex: 80,
         }}
       />
