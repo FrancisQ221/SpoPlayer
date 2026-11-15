@@ -143,6 +143,8 @@ export interface SpoPlayerElectronApi {
   pauseOverlayShortcuts: (paused: boolean) => void;
   onOverlaySettingsChanged: (cb: (settings: any) => void) => () => void;
   onOverlayVisibility: (cb: (visible: boolean) => void) => () => void;
+  setOverlayExpanded?: (expanded: boolean) => void;
+  moveOverlayBy?: (deltaX: number, deltaY: number) => void;
   setOverlayAuthenticated?: (authenticated: boolean) => void;
   discordUpdateState: (state: any) => void;
   discordUpdateSettings: (settings: any) => void;
@@ -374,6 +376,12 @@ const api: SpoPlayerElectronApi = {
     return () => {
       ipcRenderer.removeListener("overlay:visibility", listener);
     };
+  },
+  setOverlayExpanded: (expanded: boolean) => {
+    ipcRenderer.send("overlay:set-expanded", expanded);
+  },
+  moveOverlayBy: (deltaX: number, deltaY: number) => {
+    ipcRenderer.send("overlay:move-by", { deltaX, deltaY });
   },
   setOverlayAuthenticated: (authenticated) => {
     ipcRenderer.send("overlay:set-authenticated", authenticated);

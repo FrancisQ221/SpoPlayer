@@ -288,11 +288,13 @@ export class OverlayManager {
     }
   }
 
+  private isExpanded = false;
+
   private getTargetHeight(): number {
-    return 56;
+    return this.isExpanded ? 104 : 56;
   }
 
-  private getWindowBounds(width = 320, height?: number) {
+  private getWindowBounds(width?: number, height?: number) {
     let targetDisplay = screen.getPrimaryDisplay();
     try {
       if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
@@ -306,6 +308,7 @@ export class OverlayManager {
 
     const { workArea } = targetDisplay;
     const padding = 20;
+    const finalWidth = width ?? (this.isExpanded ? 480 : 320);
     const finalHeight = height ?? this.getTargetHeight();
 
     let x: number;
@@ -316,15 +319,15 @@ export class OverlayManager {
         x = Math.round(workArea.x + padding);
         break;
       case "top-right":
-        x = Math.round(workArea.x + workArea.width - width - padding);
+        x = Math.round(workArea.x + workArea.width - finalWidth - padding);
         break;
       case "top-center":
       default:
-        x = Math.round(workArea.x + (workArea.width - width) / 2);
+        x = Math.round(workArea.x + (workArea.width - finalWidth) / 2);
         break;
     }
 
-    return { x, y, width, height: finalHeight };
+    return { x, y, width: finalWidth, height: finalHeight };
   }
 
   private stopMoveAnimation() {
@@ -651,6 +654,7 @@ export class OverlayManager {
   }
 
   public closeOverlay() {
+    this.isExpanded = false;
     this.wasAutoOpened = false;
     this.pendingShow = false;
     this.wantVisible = false;
@@ -839,6 +843,33 @@ export class OverlayManager {
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
         this.mainWindow.webContents.send("overlay:action", action);
       }
+    });
+
+    ipcMain.on("overlay:set-expanded", (_event, expanded: boolean) => {
+      if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return;
+      this.isExpanded = Boolean(expanded);
+      const targetWidth = this.isExpanded ? 480 : 320;
+      const targetHeight = this.isExpanded ? 104 : 56;
+      const currentBounds = this.overlayWindow.getBounds();
+      const centerX = currentBounds.x + currentBounds.width / 2;
+      const newX = Math.round(centerX - targetWidth / 2);
+      this.overlayWindow.setBounds({
+        x: newX,
+        y: currentBounds.y,
+        width: targetWidth,
+        height: targetHeight,
+      });
+    });
+
+    ipcMain.on("overlay:move-by", (_event, { deltaX, deltaY }: { deltaX: number; deltaY: number }) => {
+      if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return;
+      const bounds = this.overlayWindow.getBounds();
+      this.overlayWindow.setBounds({
+        x: Math.round(bounds.x + deltaX),
+        y: Math.round(bounds.y + deltaY),
+        width: bounds.width,
+        height: bounds.height,
+      });
     });
 
     ipcMain.handle("overlay:get-initial-state", () => {
