@@ -847,7 +847,9 @@ export class OverlayManager {
 
     ipcMain.on("overlay:set-expanded", (_event, expanded: boolean) => {
       if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return;
-      this.isExpanded = Boolean(expanded);
+      const targetExpanded = Boolean(expanded);
+      if (this.isExpanded === targetExpanded) return;
+      this.isExpanded = targetExpanded;
       const targetWidth = this.isExpanded ? 480 : 320;
       const targetHeight = this.isExpanded ? 112 : 56;
       const currentBounds = this.overlayWindow.getBounds();

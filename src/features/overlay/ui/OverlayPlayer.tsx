@@ -67,7 +67,15 @@ export function OverlayPlayer() {
   const dragStartPosRef = useRef<{ screenX: number; screenY: number } | null>(null);
   const isDraggingRef = useRef(false);
 
+  // Cooldown guard: prevents the toggle loop caused by Electron resizing the window,
+  // which fires phantom pointer events that re-trigger toggleExpanded.
+  const lastToggleTimeRef = useRef<number>(0);
+  const TOGGLE_COOLDOWN_MS = 500;
+
   const toggleExpanded = useCallback(() => {
+    const now = Date.now();
+    if (now - lastToggleTimeRef.current < TOGGLE_COOLDOWN_MS) return;
+    lastToggleTimeRef.current = now;
     setIsExpanded((prev) => {
       const next = !prev;
       window.spoplayerElectron?.setOverlayExpanded?.(next);
@@ -76,6 +84,7 @@ export function OverlayPlayer() {
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (dragStartPosRef.current) return; // ya estamos rastreando, evitar doble registro
     const target = e.target as HTMLElement | null;
     if (target?.closest("[data-no-toggle]") || target?.closest("button") || target?.closest("input")) {
       return;
@@ -357,6 +366,12 @@ export function OverlayPlayer() {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onLostPointerCapture={() => {
+        // El resize de Electron puede cancelar el pointer capture y disparar
+        // eventos sintéticos de pointerup. Limpiamos el estado sin llamar toggleExpanded.
+        dragStartPosRef.current = null;
+        isDraggingRef.current = false;
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           const target = e.target as HTMLElement | null;
@@ -373,7 +388,6 @@ export function OverlayPlayer() {
     >
       {/* ── Main Overlay Card ── */}
       <motion.div
-        layout
         transition={OVERLAY_CARD_TRANSITION}
         className={`relative flex w-full shrink-0 flex-col overflow-hidden bg-[#0d0d10] border border-white/10 dark:border-[var(--accent-primary,#00f59b)]/35 shadow-[0_12px_40px_rgba(0,0,0,0.7)] hover:border-[var(--accent-primary,#00f59b)]/40 transition-colors ${
           isExpanded ? "h-[104px] rounded-[22px] px-3.5 py-2.5" : "h-[48px] rounded-full px-2.5 py-1.5"
