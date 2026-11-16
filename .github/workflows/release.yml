@@ -69,9 +69,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build native snap-preview add-on (Windows 11 only)
-        shell: cmd
-        run: pnpm dlx node-gyp@11 rebuild --directory native/snap-preview
+        run: pnpm dlx node-gyp@11 rebuild --directory native/snap-preview --msvs_version=2022
+        env:
+          GYP_MSVS_VERSION: "2022"
 
       - name: Verify native add-on exports
         run: node scripts/verify-native-addon.cjs
