@@ -8,6 +8,8 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/FrancisQ221/SpoPlayer?style=for-the-badge&color=00f59b&logo=github&labelColor=121815)](https://github.com/FrancisQ221/SpoPlayer/releases/latest)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white&labelColor=121815)](https://github.com/FrancisQ221/SpoPlayer/releases/latest)
+[![Linux](https://img.shields.io/badge/Linux-AppImage%20%7C%20deb-FCC624?style=for-the-badge&logo=linux&logoColor=black&labelColor=121815)](https://github.com/FrancisQ221/SpoPlayer/releases/latest)
+[![macOS](https://img.shields.io/badge/macOS-12%2B-000000?style=for-the-badge&logo=apple&logoColor=white&labelColor=121815)](https://github.com/FrancisQ221/SpoPlayer/releases/latest)
 [![Electron](https://img.shields.io/badge/Electron-44.0-47848F?style=for-the-badge&logo=electron&logoColor=white&labelColor=121815)](https://electronjs.org)
 [![React 19](https://img.shields.io/badge/React_19-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=white&labelColor=121815)](https://react.dev)
 [![TypeScript 5](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white&labelColor=121815)](https://www.typescriptlang.org)
@@ -28,11 +30,17 @@
 
 ## 📥 Descarga
 
-Puedes descargar el instalador oficial para Windows directamente desde la sección de lanzamientos:
+Puedes descargar el instalador oficial directamente desde la sección de lanzamientos:
 
-👉 **[Descargar SpoPlayer para Windows (.exe)](https://github.com/FrancisQ221/SpoPlayer/releases/latest)**
+| Plataforma | Formato | Enlace |
+|---|---|---|
+| 🪟 **Windows 10/11** (64-bit) | `.exe` installer | [Descargar](https://github.com/FrancisQ221/SpoPlayer/releases/latest) |
+| 🐧 **Linux** (x64) | `.AppImage` / `.deb` | [Descargar](https://github.com/FrancisQ221/SpoPlayer/releases/latest) |
+| 🍎 **macOS 12+** (Intel & Apple Silicon) | `.dmg` / `.zip` | [Descargar](https://github.com/FrancisQ221/SpoPlayer/releases/latest) |
 
-*Compatible con Windows 10 y Windows 11 (64-bit).*
+> **Linux:** Tras descargar el `.AppImage`, dale permisos de ejecución: `chmod +x SpoPlayer-*.AppImage`
+>
+> **macOS:** Si ves "app dañada" al abrir el `.dmg`, ejecuta: `xattr -cr /Applications/SpoPlayer.app`
 
 ---
 
@@ -125,12 +133,22 @@ pnpm install
 pnpm run dev
 ```
 
-### Compilar el Instalador (.exe)
+### Compilar por plataforma
 
 ```bash
-# Genera el instalador de Windows (NSIS) en la carpeta release/
+# Windows — genera el instalador NSIS (.exe) en release/
+# Nota: compila primero el addon nativo de Windows 11
+pnpm run native:build
 pnpm run electron:build:win
+
+# Linux — genera AppImage y .deb en release/
+pnpm run electron:build:linux
+
+# macOS — genera .dmg y .zip (x64 + arm64) en release/
+pnpm run electron:build:mac
 ```
+
+> **macOS:** El build de macOS requiere correr en un runner macOS (el CI de GitHub Actions lo hace automáticamente). Si compilas localmente en macOS sin certificado de Apple, el `.dmg` no estará firmado; usa `xattr -cr` para abrirlo.
 
 ---
 

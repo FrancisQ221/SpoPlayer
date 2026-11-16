@@ -69,6 +69,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build native snap-preview add-on (Windows 11 only)
+        run: pnpm run native:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build Windows installer (NSIS)
         run: pnpm run electron:build:win
         env:
@@ -77,7 +82,7 @@ jobs:
           VITE_COVERS_PROXY_URL: https://nmqjoehuyhnwxlcezhuv.supabase.co
 
       # the drag-to-top snap preview (windows 11) is a native add-on built by
-      # electron:build:win (native:build); never ship an installer without it
+      # native:build above; never ship a Windows installer without it
       - name: Verify native snap preview add-on is packaged
         shell: pwsh
         run: |
