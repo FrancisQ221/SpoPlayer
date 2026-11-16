@@ -66,7 +66,7 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
 
   return (
     <div className="flex flex-col gap-[16px]">
-      <SettingSection>
+      <SettingSection label={t("settings.playback.section_behavior") || "Comportamiento"}>
 
       <SettingRow
         title={t("settings.autoplay_similar.title")}
@@ -153,7 +153,9 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
           />
         }
       />
+    </SettingSection>
 
+      <SettingSection label={t("settings.playback.section_transitions") || "Transiciones de audio"}>
       <SettingRow
         title={t("settings.playback.crossfade") || "Fundido de canciones (Crossfade)"}
         description={
@@ -231,7 +233,9 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
           />
         }
       />
+    </SettingSection>
 
+      <SettingSection label={t("settings.playback.section_effects") || "Efectos de audio"}>
       <SettingRow
         title={t("settings.playback.spatial_audio") || "Audio Espacial 8D"}
         description={
@@ -318,36 +322,65 @@ export function PlaybackTab({ searchQuery }: { searchQuery?: string }) {
           }
         />
       ) : (
-        <SettingRow
-          title="Clave de sesión de Last.fm (Session Key)"
-          description="Introduce tu Session Key de Last.fm para vincular tu cuenta y habilitar el scrobbling."
-          control={
-            <div className="flex items-center gap-2">
+        <>
+          <SettingRow
+            title="Nombre de usuario Last.fm"
+            description="Tu nombre de usuario de Last.fm (opcional, mejora el estado de conexión)."
+            control={
               <input
-                type="password"
-                placeholder="Session Key..."
-                value={inputSk}
-                onChange={(e) => setInputSk(e.target.value)}
-                className="w-48 h-8 px-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder:text-white/30 outline-none focus:border-[var(--accent-primary,#00f59b)]/50"
+                type="text"
+                placeholder="tu_usuario"
+                value={inputUser}
+                onChange={(e) => setInputUser(e.target.value)}
+                className="w-40 h-8 px-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder:text-white/30 outline-none focus:border-[var(--accent-primary,#00f59b)]/50"
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                disabled={!inputSk.trim()}
-                onClick={() => {
-                  if (inputSk.trim()) {
-                    setLastFmSessionKey(inputSk.trim());
-                    if (inputUser.trim()) setLastFmUsername(inputUser.trim());
-                    setInputSk("");
-                  }
-                }}
-              >
-                Vincular
-              </Button>
-            </div>
-          }
-        />
+            }
+          />
+          <SettingRow
+            title="Clave de sesión de Last.fm (Session Key)"
+            description={
+              <span>
+                Pega tu Session Key para vincular tu cuenta. Puedes obtenerla en{" "}
+                <a
+                  href="https://www.last.fm/api/account/create"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--accent-primary,#00f59b)] underline hover:opacity-80"
+                >
+                  last.fm/api
+                </a>{" "}
+                o usando LastAuth.
+              </span>
+            }
+            control={
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  placeholder="Session Key..."
+                  value={inputSk}
+                  onChange={(e) => setInputSk(e.target.value)}
+                  className="w-48 h-8 px-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder:text-white/30 outline-none focus:border-[var(--accent-primary,#00f59b)]/50"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  disabled={!inputSk.trim()}
+                  onClick={() => {
+                    if (inputSk.trim()) {
+                      setLastFmSessionKey(inputSk.trim());
+                      if (inputUser.trim()) setLastFmUsername(inputUser.trim());
+                      setInputSk("");
+                      setInputUser("");
+                    }
+                  }}
+                >
+                  Vincular
+                </Button>
+              </div>
+            }
+          />
+        </>
       )}
 
       <SettingRow

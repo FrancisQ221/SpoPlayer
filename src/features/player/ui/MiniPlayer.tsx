@@ -802,7 +802,7 @@ function MiniPlayer({
             </div>
             <button
               type="button"
-              aria-label={isLiked ? "Unlike" : "Like"}
+              aria-label={isLiked ? (t("player.unlike") || "Unlike") : (t("player.like") || "Like")}
               className={`${iconButtonClass} shrink-0 transition-all duration-200 pointer-events-auto prevent-seek active:scale-90 ${
                 isLiked ? "text-[var(--accent-primary,#00f59b)] drop-shadow-[0_0_8px_rgba(0,245,155,0.45)]" : "text-text-secondary hover:text-text-primary"
               }`}
@@ -830,7 +830,7 @@ function MiniPlayer({
               <button
                 ref={volumeToggleRef}
                 type="button"
-                aria-label="Volume"
+                aria-label={t("player.volume") || "Volume"}
                 className={`${iconButtonClass} ${
                   volumeOpen ? "bg-bg-toolbox-active text-text-primary" : ""
                 }`}
@@ -898,7 +898,7 @@ function MiniPlayer({
           >
             <button
               type="button"
-              aria-label="Shuffle"
+              aria-label={player.shuffle ? t("player.shuffle_on") : t("player.shuffle_off")}
               title={player.shuffle ? t("player.shuffle_on") : t("player.shuffle_off")}
               className={`${iconButtonClass} ${
                 player.shuffle ? activeToggleClass : ""
@@ -910,7 +910,7 @@ function MiniPlayer({
             </button>
             <button
               type="button"
-              aria-label="Previous track"
+              aria-label={t("player.prev_track") || "Previous track"}
               className={`${iconButtonClass} text-text-secondary hover:text-text-primary`}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {
@@ -922,7 +922,7 @@ function MiniPlayer({
             </button>
             <button
               type="button"
-              aria-label={isPlaying ? "Pause" : "Play"}
+              aria-label={isPlaying ? (t("player.pause") || "Pause") : (t("player.play") || "Play")}
               className="inline-flex h-[36px] w-[36px] items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text transition-all duration-150 ease-out hover:scale-110 active:scale-[0.93] border-none cursor-pointer shadow-[0_0_16px_rgba(0,245,155,0.35)] hover:shadow-[0_0_24px_rgba(0,245,155,0.6)]"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {
@@ -957,7 +957,7 @@ function MiniPlayer({
             </button>
             <button
               type="button"
-              aria-label="Next track"
+              aria-label={t("player.next_track") || "Next track"}
               className={`${iconButtonClass} text-text-secondary hover:text-text-primary`}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {

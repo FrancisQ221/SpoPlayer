@@ -146,8 +146,8 @@ export function ShortcutsTab({ searchQuery: externalQuery }: { searchQuery?: str
       desc: t("settings.shortcuts.toggle_lyrics_mode_desc") || "Alterna entre el modo de letras con enfoque dinámico y el modo estándar.",
     },
     toggleEqualizer: {
-      title: "Ecualizador de audio",
-      desc: "Abre o cierra el panel del ecualizador gráfico de 5 bandas.",
+      title: t("settings.shortcuts.toggle_equalizer") || "Ecualizador de audio",
+      desc: t("settings.shortcuts.toggle_equalizer_desc") || "Abre o cierra el panel del ecualizador gráfico de 5 bandas.",
     },
   };
 

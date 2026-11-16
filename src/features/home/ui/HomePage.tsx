@@ -59,7 +59,7 @@ export default function HomePage() {
     return (recentlyPlayed || []).slice(0, 5);
   }, [recentlyPlayed]);
 
-  const hasEnoughQuickData = quickRecentItems.length >= 3;
+  const hasEnoughQuickData = quickRecentItems.length >= 1;
 
   // If we already have any data in memory, render immediately with zero delay
   const hasAnyData = Boolean(

@@ -288,6 +288,10 @@ export function CustomizationTab({ searchQuery }: { searchQuery?: string }) {
                 onChange={setActiveBlock}
                 options={[
                   {
+                    value: "sidebar",
+                    label: t("settings.customization.block_sidebar") || "Barra lateral",
+                  },
+                  {
                     value: "contentView",
                     label: t("settings.customization.block_content") || "Área principal",
                   },

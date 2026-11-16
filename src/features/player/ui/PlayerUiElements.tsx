@@ -200,7 +200,7 @@ export function PlayerUiElements({
         onSeek={(pos) => playerEngine.seek(pos)}
         showTime
         size="md"
-        className="w-[320px]"
+        className="w-[280px]"
       />
 
       {/* Primary Playback Controls */}
@@ -218,7 +218,7 @@ export function PlayerUiElements({
 
         <button
           type="button"
-          aria-label="Previous track"
+          aria-label={t("player.prev_track") || "Previous track"}
           onClick={() => void playerEngine.skipPrevious()}
           className={iconButtonClass}
         >
@@ -227,7 +227,7 @@ export function PlayerUiElements({
 
         <button
           type="button"
-          aria-label={player.status === "playing" ? "Pause" : "Play"}
+          aria-label={player.status === "playing" ? (t("player.pause") || "Pause") : (t("player.play") || "Play")}
           onClick={() => void playerEngine.togglePlayPause()}
           className="inline-flex h-[36px] w-[36px] items-center justify-center text-white opacity-85 transition-all duration-150 ease-out hover:opacity-100 active:scale-[0.94] shrink-0 border-none bg-transparent cursor-pointer"
         >
@@ -236,7 +236,7 @@ export function PlayerUiElements({
 
         <button
           type="button"
-          aria-label="Next track"
+          aria-label={t("player.next_track") || "Next track"}
           onClick={() => void playerEngine.skipNext()}
           className={iconButtonClass}
         >
@@ -245,7 +245,7 @@ export function PlayerUiElements({
 
         <button
           type="button"
-          aria-label="Repeat"
+          aria-label={t(`player.repeat_${player.repeat}`) || "Repeat"}
           onClick={() =>
             playerEngine.setRepeat(
               // radio has no repeat-all: it refills instead of looping
