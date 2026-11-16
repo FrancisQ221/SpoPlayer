@@ -70,9 +70,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build native snap-preview add-on (Windows 11 only)
-        run: pnpm run native:build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: pnpm dlx node-gyp@11 rebuild --directory native/snap-preview
+
+      - name: Verify native add-on exports
+        run: node scripts/verify-native-addon.cjs
 
       - name: Build Windows installer (NSIS)
         run: pnpm run electron:build:win
