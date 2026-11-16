@@ -78,13 +78,18 @@ export function getOrCreateEqualizerNodes(ctx: AudioContext): {
   };
 }
 
-function applyStoreGainsToGraph() {
+export function applyStoreGainsToGraph() {
   if (!activeGraph) return;
   const { enabled, gains } = useEqualizerStore.getState();
   const now = activeGraph.ctx.currentTime;
 
   activeGraph.filters.forEach((filter, i) => {
     const targetGain = enabled ? (gains[i] ?? 0) : 0;
-    filter.gain.setTargetAtTime(targetGain, now, 0.04);
+    try {
+      filter.gain.cancelScheduledValues(now);
+      filter.gain.setTargetAtTime(targetGain, now, 0.04);
+    } catch {
+      filter.gain.value = targetGain;
+    }
   });
 }

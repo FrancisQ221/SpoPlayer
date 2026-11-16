@@ -1,4 +1,6 @@
 import { usePlayerStore } from "../store/playerStore";
+import { useEqualizerStore } from "../store/equalizerStore";
+import { applyStoreGainsToGraph } from "./equalizerEngine";
 import { ApiError } from "@/shared/api";
 import { log } from "@/shared/utils/logger";
 import { telemetry } from "@/shared/telemetry";
@@ -69,6 +71,7 @@ export class PlayerRuntime {
     }
     this.audio = audio;
     this.setupAudioListeners(this.audio);
+    pitchShifter.attach(this.audio);
 
     const initialVolume = usePlayerStore.getState().volume;
     this.audio.volume = initialVolume;
@@ -81,6 +84,16 @@ export class PlayerRuntime {
     }
     pitchShifter.applyMonoAudio(usePlayerStore.getState().monoAudioEnabled ?? false);
     log("cyan", "boot", `volume ${initialVolume}`);
+
+    useEqualizerStore.subscribe((eqState) => {
+      // When the EQ is enabled, make sure the Web Audio graph is built
+      // (pitchShifter.attach is a no-op if already attached to the same element)
+      pitchShifter.attach(this.audio);
+      pitchShifter.resumeContext();
+      // Push the current gains into the now-active graph nodes
+      applyStoreGainsToGraph();
+      void eqState;
+    });
 
     usePlayerStore.subscribe((state, prevState) => {
       if (state.status !== prevState.status) {
@@ -495,8 +508,6 @@ export class PlayerRuntime {
       const pitchSemitones = store.pitchSemitones ?? 0;
       const isReverbEnabled = store.isReverbEnabled ?? false;
       const reverbLevel = store.reverbLevel ?? 0.35;
-      const needsEffects = isReverbEnabled || (!isPitchLinked && Math.abs(pitchSemitones) >= 0.05);
-      if (!needsEffects && !pitchShifter.isAttached()) return;
       pitchShifter.attach(this.audio);
       pitchShifter.update({
         pitchSemitones,
@@ -788,6 +799,7 @@ export class PlayerRuntime {
         const playPromise = this.audio.play();
         this.activePlayPromise = playPromise;
         await playPromise;
+        pitchShifter.resumeContext();
 
         const audioStartLatencyMs = Math.round(
           performance.now() - this.loadStartTime,
@@ -856,6 +868,7 @@ export class PlayerRuntime {
       const playPromise = this.audio.play();
       this.activePlayPromise = playPromise;
       await playPromise;
+      pitchShifter.resumeContext();
 
       const audioStartLatencyMs = Math.round(
         performance.now() - this.loadStartTime,
