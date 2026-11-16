@@ -2,7 +2,13 @@ import { BrowserWindow, ipcMain, screen, globalShortcut, app } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 
-export type OverlayPosition = "top-left" | "top-center" | "top-right";
+export type OverlayPosition =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
 
 export interface OverlaySettings {
   enabled: boolean;
@@ -129,7 +135,10 @@ export class OverlayManager {
         if (
           data.position === "top-left" ||
           data.position === "top-center" ||
-          data.position === "top-right"
+          data.position === "top-right" ||
+          data.position === "bottom-left" ||
+          data.position === "bottom-center" ||
+          data.position === "bottom-right"
         ) {
           this.position = data.position;
         }
@@ -312,16 +321,21 @@ export class OverlayManager {
     const finalHeight = height ?? this.getTargetHeight();
 
     let x: number;
-    const y = Math.round(workArea.y + padding);
+    const y = this.position.startsWith("bottom-")
+      ? Math.round(workArea.y + workArea.height - finalHeight - padding)
+      : Math.round(workArea.y + padding);
 
     switch (this.position) {
       case "top-left":
+      case "bottom-left":
         x = Math.round(workArea.x + padding);
         break;
       case "top-right":
+      case "bottom-right":
         x = Math.round(workArea.x + workArea.width - finalWidth - padding);
         break;
       case "top-center":
+      case "bottom-center":
       default:
         x = Math.round(workArea.x + (workArea.width - finalWidth) / 2);
         break;
@@ -342,15 +356,16 @@ export class OverlayManager {
 
     this.stopMoveAnimation();
 
-    const startX = this.currentAnimatedX ?? this.overlayWindow.getBounds().x;
+    const currentBounds = this.overlayWindow.getBounds();
+    const startX = this.currentAnimatedX ?? currentBounds.x;
+    const startY = currentBounds.y;
 
-    if (startX === targetBounds.x) {
+    if (startX === targetBounds.x && startY === targetBounds.y) {
       this.currentAnimatedX = null;
       return;
     }
 
     const startTime = performance.now();
-    // Cubic ease out: 1 - Math.pow(1 - t, 3)
     const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
     const interval = 8;
 
@@ -366,11 +381,12 @@ export class OverlayManager {
       const eased = easeOutCubic(progress);
 
       const currentX = Math.round(startX + (targetBounds.x - startX) * eased);
+      const currentY = Math.round(startY + (targetBounds.y - startY) * eased);
       this.currentAnimatedX = currentX;
 
       this.overlayWindow.setBounds({
         x: currentX,
-        y: targetBounds.y,
+        y: currentY,
         width: targetBounds.width,
         height: targetBounds.height,
       });
@@ -850,17 +866,8 @@ export class OverlayManager {
       const targetExpanded = Boolean(expanded);
       if (this.isExpanded === targetExpanded) return;
       this.isExpanded = targetExpanded;
-      const targetWidth = this.isExpanded ? 480 : 320;
-      const targetHeight = this.isExpanded ? 112 : 56;
-      const currentBounds = this.overlayWindow.getBounds();
-      const centerX = currentBounds.x + currentBounds.width / 2;
-      const newX = Math.round(centerX - targetWidth / 2);
-      this.overlayWindow.setBounds({
-        x: newX,
-        y: currentBounds.y,
-        width: targetWidth,
-        height: targetHeight,
-      });
+      const bounds = this.getWindowBounds();
+      this.overlayWindow.setBounds(bounds);
     });
 
     ipcMain.on("overlay:move-by", (_event, { deltaX, deltaY }: { deltaX: number; deltaY: number }) => {
@@ -914,7 +921,10 @@ export class OverlayManager {
       if (
         settings.position === "top-left" ||
         settings.position === "top-center" ||
-        settings.position === "top-right"
+        settings.position === "top-right" ||
+        settings.position === "bottom-left" ||
+        settings.position === "bottom-center" ||
+        settings.position === "bottom-right"
       ) {
         const changed = this.position !== settings.position;
         this.position = settings.position;

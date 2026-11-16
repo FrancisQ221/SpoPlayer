@@ -6,9 +6,12 @@ import { SettingRow, SettingSection, SegmentedControl } from "../controls";
 import { useTraySettingsStore } from "@/features/tray";
 
 const POSITION_CONFIG = [
-  { value: "top-left" as const, key: "settings.overlay.position.top_left", fallback: "Top Left" },
-  { value: "top-center" as const, key: "settings.overlay.position.top_center", fallback: "Top Middle" },
-  { value: "top-right" as const, key: "settings.overlay.position.top_right", fallback: "Top Right" },
+  { value: "top-left" as const, key: "settings.overlay.position.top_left", fallback: "Arriba Izq." },
+  { value: "top-center" as const, key: "settings.overlay.position.top_center", fallback: "Arriba Centro" },
+  { value: "top-right" as const, key: "settings.overlay.position.top_right", fallback: "Arriba Der." },
+  { value: "bottom-left" as const, key: "settings.overlay.position.bottom_left", fallback: "Abajo Izq." },
+  { value: "bottom-center" as const, key: "settings.overlay.position.bottom_center", fallback: "Abajo Centro" },
+  { value: "bottom-right" as const, key: "settings.overlay.position.bottom_right", fallback: "Abajo Der." },
 ] as const;
 
 export function OverlayTab({ searchQuery }: { searchQuery?: string }) {
