@@ -1,22 +1,36 @@
 import { useState, useEffect } from "react";
 import { FolderOpenLine } from "@mingcute/react";
-import { useToast } from "@/shared/ui";
+import { useToast, ToggleSwitch, Select } from "@/shared/ui";
 import Button from "@/shared/ui/Button";
 import { useTranslation } from "@/languages";
 import { usePlayerStore, type AudioQuality } from "@/features/player";
-import { Select } from "@/shared/ui";
 import { useConnectivityStore } from "@/features/connectivity";
 import { SettingRow, SettingSection } from "../controls";
 import { useModalStore } from "@/features/library";
 import { useEqualizerStore, EQUALIZER_PRESETS } from "@/features/player/store/equalizerStore";
+
+interface DeviceOption {
+  value: string;
+  label: string;
+}
 
 export function AudioTab({ searchQuery }: { searchQuery?: string }) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
   const [dumpExported, setDumpExported] = useState(false);
+
   const audioQuality = usePlayerStore((state) => state.audioQuality);
   const setAudioQuality = usePlayerStore((state) => state.setAudioQuality);
+  const audioOutputDeviceId = usePlayerStore((state) => state.audioOutputDeviceId ?? "default");
+  const setAudioOutputDeviceId = usePlayerStore((state) => state.setAudioOutputDeviceId);
+  const monoAudioEnabled = usePlayerStore((state) => state.monoAudioEnabled ?? false);
+  const setMonoAudioEnabled = usePlayerStore((state) => state.setMonoAudioEnabled);
+
+  const [outputDevices, setOutputDevices] = useState<DeviceOption[]>([
+    { value: "default", label: "Dispositivo predeterminado del sistema" },
+  ]);
+
   const connRunning = useConnectivityStore((s) => s.running);
   const connChecks = useConnectivityStore((s) => s.checks);
   const connLastRunAt = useConnectivityStore((s) => s.lastRunAt);
@@ -28,15 +42,71 @@ export function AudioTab({ searchQuery }: { searchQuery?: string }) {
 
   useEffect(() => {
     setMounted(true);
+
+    const refreshDevices = async () => {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) return;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const outputs: DeviceOption[] = devices
+          .filter((d) => d.kind === "audiooutput")
+          .map((d, i) => ({
+            value: d.deviceId || (i === 0 ? "default" : `device-${i}`),
+            label: d.label || (d.deviceId === "default" || i === 0 ? "Dispositivo predeterminado del sistema" : `Salida de audio ${i + 1}`),
+          }));
+
+        if (outputs.length > 0) {
+          const hasDefault = outputs.some((d) => d.value === "default");
+          if (!hasDefault) {
+            outputs.unshift({ value: "default", label: "Dispositivo predeterminado del sistema" });
+          }
+          setOutputDevices(outputs);
+        }
+      } catch (e) {
+        console.warn("[AudioTab] Failed to enumerate audio devices:", e);
+      }
+    };
+
+    void refreshDevices();
+    navigator.mediaDevices?.addEventListener?.("devicechange", refreshDevices);
+    return () => {
+      navigator.mediaDevices?.removeEventListener?.("devicechange", refreshDevices);
+    };
   }, []);
 
   // lossless is listed as unavailable, so the picker only offers live tiers
   const quality: Exclude<AudioQuality, "lossless"> =
     audioQuality === "lossless" ? "high" : audioQuality;
 
+  const deviceOptions = [...outputDevices];
+  if (!deviceOptions.some((d) => d.value === audioOutputDeviceId)) {
+    deviceOptions.unshift({
+      value: audioOutputDeviceId,
+      label: audioOutputDeviceId === "default" ? "Dispositivo predeterminado del sistema" : "Dispositivo guardado",
+    });
+  }
+
   return (
     <div className="flex flex-col gap-[16px]">
-      <SettingSection>
+      <SettingSection label="Dispositivo y Calidad">
+        <SettingRow
+          title="Dispositivo de salida de audio"
+          description="Selecciona por qué altavoces, auriculares o interfaz de sonido se reproducirá la música."
+          searchQuery={searchQuery}
+          control={
+            mounted ? (
+              <Select
+                aria-label="Dispositivo de salida de audio"
+                className="w-[240px]"
+                value={audioOutputDeviceId}
+                onChange={setAudioOutputDeviceId}
+                options={deviceOptions}
+              />
+            ) : (
+              <span />
+            )
+          }
+        />
+
         <SettingRow
           title={t("settings.audio.title")}
           description={t("settings.audio.description")}
@@ -47,7 +117,7 @@ export function AudioTab({ searchQuery }: { searchQuery?: string }) {
             mounted ? (
               <Select
                 aria-label={t("settings.audio.title")}
-                className="w-[210px]"
+                className="w-[240px]"
                 value={quality}
                 onChange={setAudioQuality}
                 options={[
@@ -59,6 +129,18 @@ export function AudioTab({ searchQuery }: { searchQuery?: string }) {
             ) : (
               <span />
             )
+          }
+        />
+
+        <SettingRow
+          title="Audio mono"
+          description="Combina los canales estéreo izquierdo y derecho para que ambos auriculares emitan el mismo sonido completo. Ideal si escuchas música con un solo auricular."
+          searchQuery={searchQuery}
+          control={
+            <ToggleSwitch
+              checked={monoAudioEnabled}
+              onChange={setMonoAudioEnabled}
+            />
           }
         />
       </SettingSection>

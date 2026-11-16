@@ -81,6 +81,7 @@ export interface ResolveAudioOptions {
   signal?: AbortSignal;
   preferredCodec?: "opus" | "aac";
   profiles?: readonly InnertubeProfile[];
+  quality?: "low" | "standard" | "high" | "lossless";
 }
 
 export function toVideoId(trackId: string): string | null {
@@ -102,7 +103,7 @@ async function resolveWithProfile(
   }
   const unplayable = playabilityError(response);
   if (unplayable) throw new InnertubeError(unplayable, 403);
-  const best = selectBestAudioFormat(extractAudioFormats(response), options.preferredCodec);
+  const best = selectBestAudioFormat(extractAudioFormats(response), options.preferredCodec, options.quality);
   if (!best) throw new InnertubeError(`${profile.clientName} returned no direct audio formats.`, 502);
   const stream = toResolvedStream(best);
   await assertStreamReachable(stream.url, stream.contentLength, options.signal);

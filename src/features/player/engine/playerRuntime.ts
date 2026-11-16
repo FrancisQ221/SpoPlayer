@@ -48,6 +48,7 @@ export class PlayerRuntime {
   // the status for that re-animated the play / pause button on every seek
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
   private gaplessTriggered = false;
+  private crossfadeTriggered = false;
   public onEnded?: () => void;
   public onError?: (info: { trackId: string; message: string }) => void;
 
@@ -74,6 +75,11 @@ export class PlayerRuntime {
     this.applyPlaybackRateAndPitch();
     setSpatialAudioEnabled(usePlayerStore.getState().spatialAudioEnabled ?? false);
     setSpatialAudioSpeed(usePlayerStore.getState().spatialAudioSpeed ?? "normal");
+    const initialDeviceId = usePlayerStore.getState().audioOutputDeviceId;
+    if (initialDeviceId && initialDeviceId !== "default") {
+      void this.setAudioOutputDevice(initialDeviceId);
+    }
+    pitchShifter.applyMonoAudio(usePlayerStore.getState().monoAudioEnabled ?? false);
     log("cyan", "boot", `volume ${initialVolume}`);
 
     usePlayerStore.subscribe((state, prevState) => {
@@ -91,6 +97,12 @@ export class PlayerRuntime {
       }
       if (state.spatialAudioSpeed !== prevState.spatialAudioSpeed) {
         setSpatialAudioSpeed(state.spatialAudioSpeed ?? "normal");
+      }
+      if (state.audioOutputDeviceId !== prevState.audioOutputDeviceId) {
+        void this.setAudioOutputDevice(state.audioOutputDeviceId);
+      }
+      if (state.monoAudioEnabled !== prevState.monoAudioEnabled) {
+        pitchShifter.applyMonoAudio(state.monoAudioEnabled ?? false);
       }
       if (
         state.playbackRate !== prevState.playbackRate ||
@@ -267,6 +279,15 @@ export class PlayerRuntime {
           // Bass-swap: cut bass from outgoing track (progress = 1 - fadeProgress, so 0→1)
           const bassSwapEnabled = usePlayerStore.getState().bassSwapEnabled ?? true;
           applyBassSwapToOutgoing(1 - fadeProgress, bassSwapEnabled);
+
+          // Advance to next track seamlessly near the end of the crossfade window
+          if (remainingSec <= 0.35 && !this.crossfadeTriggered) {
+            this.crossfadeTriggered = true;
+            log("cyan", "audio", `crossfade transition triggered (${crossfadeSec}s)`);
+            this.onEnded?.();
+            const state = usePlayerStore.getState();
+            state.dispatch({ type: "SKIP_NEXT", isAutoEnd: true });
+          }
         } else {
           resetBassSwapFilter();
         }
@@ -331,8 +352,9 @@ export class PlayerRuntime {
       if (this.isResetting || audioEl !== this.audio) return;
       if (!this.currentTrackId) return;
       if (this.attachedTrackId !== this.currentTrackId) return;
-      if (this.gaplessTriggered) {
+      if (this.gaplessTriggered || this.crossfadeTriggered) {
         this.gaplessTriggered = false;
+        this.crossfadeTriggered = false;
         return;
       }
 
@@ -671,6 +693,8 @@ export class PlayerRuntime {
   ) {
     this.cancelFade();
     this.gaplessTriggered = false;
+    this.crossfadeTriggered = false;
+    resetBassSwapFilter();
     this.pendingStartPositionMs = startPositionMs;
     const epoch = ++this.loadEpoch;
 
@@ -913,6 +937,18 @@ export class PlayerRuntime {
       apply();
     } else {
       this.audio.addEventListener("loadedmetadata", apply, { once: true });
+    }
+  }
+
+  public async setAudioOutputDevice(deviceId: string): Promise<void> {
+    const audio = this.audio as any;
+    if (typeof audio?.setSinkId === "function") {
+      try {
+        await audio.setSinkId(deviceId === "default" ? "" : deviceId);
+        log("cyan", "audio", `Output device set to: ${deviceId || "default"}`);
+      } catch (err) {
+        console.warn("[playerRuntime] Failed to set audio sink ID:", err);
+      }
     }
   }
 

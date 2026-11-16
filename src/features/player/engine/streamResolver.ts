@@ -3,6 +3,7 @@ import { resolveSoundCloudStream, toSoundCloudTrackId } from "@/shared/media/sou
 import { resolveSpoPlayerStream } from "@/shared/media/spoplayer/spoplayerPlayback";
 import { isAbortError } from "@/shared/utils/abort";
 import { log } from "@/shared/utils/logger";
+import { usePlayerStore } from "../store/playerStore";
 import {
   fromInnertubeStream,
   fromSpoPlayerStream,
@@ -17,8 +18,9 @@ export type { BufferedPlaybackStream, PlayableTrack, PlaybackStream, UrlPlayback
 async function resolveYoutubeStandIn(track: PlayableTrack, signal?: AbortSignal): Promise<PlaybackStream> {
   const videoId = await findYoutubeStandIn(track, signal);
   if (!videoId) throw new Error("No matching YouTube track found");
-  log("cyan", "playback", `playing youtube stand-in ${videoId} for "${track.title}"`);
-  return fromInnertubeStream(await resolveDirectAudioStream(videoId, { signal }));
+  const quality = usePlayerStore.getState().audioQuality;
+  log("cyan", "playback", `playing youtube stand-in ${videoId} for "${track.title}" (quality: ${quality})`);
+  return fromInnertubeStream(await resolveDirectAudioStream(videoId, { signal, quality }));
 }
 
 async function resolveSoundCloud(track: PlayableTrack, signal?: AbortSignal): Promise<PlaybackStream> {
@@ -42,7 +44,8 @@ async function resolveYoutubeTrack(track: PlayableTrack, videoId: string, signal
     log("cyan", "playback", `playing spoplayer audio (r2) for "${track.title}"`);
     return fromSpoPlayerStream(stream, track);
   }
-  return fromInnertubeStream(await resolveDirectAudioStream(track.id, { signal }));
+  const quality = usePlayerStore.getState().audioQuality;
+  return fromInnertubeStream(await resolveDirectAudioStream(track.id, { signal, quality }));
 }
 
 export async function resolvePlaybackStream(track: PlayableTrack, signal?: AbortSignal): Promise<PlaybackStream> {

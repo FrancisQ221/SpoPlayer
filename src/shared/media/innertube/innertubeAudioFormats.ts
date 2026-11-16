@@ -44,9 +44,22 @@ export function extractAudioFormats(playerResponse: unknown): AudioFormat[] {
     .filter((format): format is AudioFormat => Boolean(format));
 }
 
-export function selectBestAudioFormat(formats: AudioFormat[], preferredCodec?: "opus" | "aac"): AudioFormat | null {
+export function selectBestAudioFormat(
+  formats: AudioFormat[],
+  preferredCodec?: "opus" | "aac",
+  quality?: "low" | "standard" | "high" | "lossless",
+): AudioFormat | null {
   if (formats.length === 0) return null;
-  const order = preferredCodec === "aac" ? [140, 139, 251, 250, 249] : PREFERRED_ITAGS;
+
+  let order: number[];
+  if (quality === "low") {
+    order = preferredCodec === "aac" ? [139, 140, 249, 250, 251] : [249, 139, 250, 140, 251];
+  } else if (quality === "standard") {
+    order = preferredCodec === "aac" ? [140, 139, 250, 251, 249] : [140, 250, 251, 249, 139];
+  } else {
+    order = preferredCodec === "aac" ? [140, 139, 251, 250, 249] : PREFERRED_ITAGS;
+  }
+
   for (const itag of order) {
     const match = formats.find((format) => format.itag === itag);
     if (match) return match;

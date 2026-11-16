@@ -418,6 +418,7 @@ export class PitchShifterController {
       this.sourceNode = graph.sourceNode;
       this.graph = graph;
       this.isConnected = true;
+      this.applyMonoAudio(usePlayerStore.getState().monoAudioEnabled ?? false);
     } catch (err) {
       console.error("[AudioEffects] Failed to attach to audio element:", err);
       this.isConnected = false;
@@ -426,6 +427,17 @@ export class PitchShifterController {
 
   public isAttached(): boolean {
     return this.isConnected;
+  }
+
+  public applyMonoAudio(mono: boolean): void {
+    if (!this.context) return;
+    try {
+      this.context.destination.channelCount = mono ? 1 : 2;
+      this.context.destination.channelCountMode = mono ? "explicit" : "max";
+      this.context.destination.channelInterpretation = "speakers";
+    } catch (e) {
+      console.warn("[AudioEffects] Failed to set mono channel configuration:", e);
+    }
   }
 
   public resumeContext(): void {

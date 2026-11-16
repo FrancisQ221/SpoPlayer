@@ -73,6 +73,8 @@ export interface SessionState {
   spatialAudioEnabled: boolean;
   spatialAudioSpeed: SpatialSpeed;
   gaplessEnabled: boolean;
+  audioOutputDeviceId: string;
+  monoAudioEnabled: boolean;
 }
 
 export type PlayerState = TransportState &
@@ -139,6 +141,8 @@ export interface PlayerStore extends PlayerState {
   setSpatialAudioEnabled: (enabled: boolean) => void;
   setSpatialAudioSpeed: (speed: SpatialSpeed) => void;
   setGaplessEnabled: (enabled: boolean) => void;
+  setAudioOutputDeviceId: (deviceId: string) => void;
+  setMonoAudioEnabled: (enabled: boolean) => void;
 }
 
 const PLAYER_SESSION_STORAGE_KEY = "spoplayer_player_session_v2";
@@ -189,6 +193,8 @@ export const usePlayerStore = create<PlayerStore>()(
       spatialAudioEnabled: false,
       spatialAudioSpeed: "normal",
       gaplessEnabled: true,
+      audioOutputDeviceId: "default",
+      monoAudioEnabled: false,
 
       dispatch: () => {
         // Implementation injected by PlayerEngine
@@ -253,6 +259,8 @@ export const usePlayerStore = create<PlayerStore>()(
       setSpatialAudioEnabled: (spatialAudioEnabled: boolean) => set({ spatialAudioEnabled }),
       setSpatialAudioSpeed: (spatialAudioSpeed: SpatialSpeed) => set({ spatialAudioSpeed }),
       setGaplessEnabled: (gaplessEnabled: boolean) => set({ gaplessEnabled }),
+      setAudioOutputDeviceId: (audioOutputDeviceId: string) => set({ audioOutputDeviceId }),
+      setMonoAudioEnabled: (monoAudioEnabled: boolean) => set({ monoAudioEnabled }),
       resetPlayback: () =>
         set({
           status: "idle",
@@ -388,6 +396,8 @@ export const usePlayerStore = create<PlayerStore>()(
         spatialAudioEnabled: state.spatialAudioEnabled ?? false,
         spatialAudioSpeed: state.spatialAudioSpeed ?? "normal",
         gaplessEnabled: state.gaplessEnabled ?? true,
+        audioOutputDeviceId: state.audioOutputDeviceId ?? "default",
+        monoAudioEnabled: state.monoAudioEnabled ?? false,
       }),
     },
   ),
