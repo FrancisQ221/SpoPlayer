@@ -50,7 +50,7 @@ jobs:
 
   build-windows:
     name: Build Windows
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -71,6 +71,8 @@ jobs:
 
       - name: Setup MSVC developer environment
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          vsversion: '2022'
 
       - name: Build native snap-preview add-on (Windows 11 only)
         run: pnpm dlx node-gyp@11 rebuild --directory native/snap-preview --msvs_version=2022
