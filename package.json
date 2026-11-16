@@ -1,6 +1,6 @@
 {
   "name": "@spoplayer/client",
-  "version": "0.1.52",
+  "version": "0.1.53",
   "type": "module",
   "private": true,
   "description": "SpoPlayer Music Player",
@@ -51,7 +51,8 @@
     ],
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "native/**/*.node"
     ],
     "linux": {
       "executableName": "spoplayer",
