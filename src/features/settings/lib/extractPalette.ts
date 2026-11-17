@@ -270,3 +270,48 @@ export function applyDynamicPalette(palette: ExtractedPalette | null) {
   root.style.setProperty("--color-border-alpha-14", palette.borderAlpha14);
   root.style.setProperty("--color-border-alpha-33", palette.borderAlpha33);
 }
+
+export function hexToRgb(hex: string): [number, number, number] {
+  let c = hex.replace("#", "").trim();
+  if (c.length === 3) {
+    c = c
+      .split("")
+      .map((x) => x + x)
+      .join("");
+  }
+  if (c.length < 6) {
+    return [0, 245, 155];
+  }
+  const num = parseInt(c.slice(0, 6), 16);
+  if (isNaN(num)) return [0, 245, 155];
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+export function buildPaletteFromHex(hex: string): ExtractedPalette {
+  const [r, g, b] = hexToRgb(hex);
+  const [h, s, l] = rgbToHsl(r, g, b);
+
+  const primary = hex;
+  const secL = Math.min(0.86, l + 0.14);
+  const [secR, secG, secB] = hslToRgb(h, s, secL);
+  const secondary = rgbToHex(secR, secG, secB);
+
+  const terL = Math.min(0.93, l + 0.28);
+  const [terR, terG, terB] = hslToRgb(h, Math.max(0.45, s * 0.8), terL);
+  const tertiary = rgbToHex(terR, terG, terB);
+
+  const btnText = l > 0.45 ? "#05120a" : "#ffffff";
+
+  return {
+    primary,
+    secondary,
+    tertiary,
+    warning: "#ffb84d",
+    btnBg: primary,
+    btnText,
+    toolboxActive: `rgba(${r}, ${g}, ${b}, 0.18)`,
+    borderAlpha14: `rgba(${r}, ${g}, ${b}, 0.18)`,
+    borderAlpha33: `rgba(${r}, ${g}, ${b}, 0.35)`,
+    rawRgb: [r, g, b],
+  };
+}

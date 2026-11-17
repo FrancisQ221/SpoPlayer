@@ -8,8 +8,13 @@ import { EyeLine, EyeCloseLine, ArrowLeftLine } from "@mingcute/react";
 import WindowControls from "@/features/navigation/ui/WindowControls";
 import { useWindowState } from "@/features/navigation/hooks/useWindowState";
 import logo from "@/assets/spoplayer-logo.png";
-import cloudsBanner from "@/assets/wallhaven-5g1yz8.jpg";
+import cosmosBg from "@/assets/wallpapers/cosmos.jpg";
+import nebulaBg from "@/assets/wallpapers/nebula.jpg";
+import initialDBg from "@/assets/wallpapers/initial-d.jpg";
+import neoTokyoBg from "@/assets/wallpapers/neo-tokyo.jpg";
 import CircleDitherCanvas from "@/shared/ui/CircleDitherCanvas";
+
+const LOGIN_WALLPAPERS = [cosmosBg, nebulaBg, initialDBg, neoTokyoBg];
 import AppImage from "@/features/covers/ui/AppImage";
 import {
   authErrorMessage,
@@ -29,6 +34,10 @@ export default function LoginPage() {
   const login = useAuthStore((state) => state.login);
   const register = useAuthStore((state) => state.register);
   const { locale, setLocale, t } = useTranslation();
+  const [activeLoginBg] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * LOGIN_WALLPAPERS.length);
+    return LOGIN_WALLPAPERS[randomIndex];
+  });
   const [mode, setMode] = useState<"login" | "register">("login");
   const [registerStep, setRegisterStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState("");
@@ -182,8 +191,8 @@ export default function LoginPage() {
     >
       <div className={`absolute inset-0 z-0 select-none overflow-hidden ${frameShape}`}>
         <CircleDitherCanvas
-          src={cloudsBanner}
-          alt="Clouds Dither Background"
+          src={activeLoginBg}
+          alt="SpoPlayer Dither Background"
           dotSize={7}
           gap={0.5}
           edgePadding={1.5}

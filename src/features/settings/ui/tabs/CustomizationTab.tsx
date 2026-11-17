@@ -4,7 +4,7 @@ import {
   TrashBin2,
   Refresh,
 } from "@solar-icons/react";
-import { Upload2Line, CopyLine } from "@mingcute/react";
+import { Upload2Line, CopyLine, CheckLine, SparklesLine } from "@mingcute/react";
 
 import { useTranslation } from "@/languages";
 import { useTheme } from "next-themes";
@@ -24,10 +24,62 @@ import {
   MIN_DIM,
   MAX_DIM,
 } from "../../store/customizationStore";
+import {
+  WALLPAPER_THEMES,
+  type WallpaperTheme,
+} from "../../data/wallpaperThemes";
+import {
+  buildPaletteFromHex,
+  applyDynamicPalette,
+} from "../../lib/extractPalette";
 
 const font = { fontFamily: "var(--font-inter), sans-serif" } as const;
 
 type BlockTarget = "sidebar" | "contentView" | "miniplayer";
+
+function ThemeLogoSvg({
+  accentColor,
+  gradient,
+  size = 36,
+}: {
+  accentColor: string;
+  gradient?: [string, string];
+  size?: number;
+}) {
+  const gradId = `theme-logo-${accentColor.replace(/[^a-zA-Z0-9]/g, "")}`;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="shrink-0 drop-shadow-md rounded-lg overflow-hidden"
+    >
+      {gradient && (
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={gradient[0]} />
+            <stop offset="100%" stopColor={gradient[1]} />
+          </linearGradient>
+        </defs>
+      )}
+      <rect
+        width="512"
+        height="512"
+        rx="112"
+        fill={gradient ? `url(#${gradId})` : accentColor}
+      />
+      <g fill="#07130E">
+        <rect x="68" y="168" width="47" height="176" rx="23.5" />
+        <rect x="150" y="86" width="47" height="340" rx="23.5" />
+        <rect x="232.5" y="141" width="47" height="230" rx="23.5" />
+        <rect x="315" y="67" width="47" height="378" rx="23.5" />
+        <rect x="397.5" y="196" width="47" height="120" rx="23.5" />
+      </g>
+    </svg>
+  );
+}
 
 export function CustomizationTab({ searchQuery }: { searchQuery?: string }) {
   const { t } = useTranslation();
@@ -40,6 +92,7 @@ export function CustomizationTab({ searchQuery }: { searchQuery?: string }) {
   const backgroundBlur = useCustomizationStore((s) => s.backgroundBlur);
   const backgroundDim = useCustomizationStore((s) => s.backgroundDim);
   const dynamicAccent = useCustomizationStore((s) => s.dynamicAccent);
+  const wallpaperAccentColor = useCustomizationStore((s) => s.wallpaperAccentColor);
   const sidebar = useCustomizationStore((s) => s.sidebar);
   const contentView = useCustomizationStore((s) => s.contentView);
   const miniplayer = useCustomizationStore((s) => s.miniplayer);
@@ -48,12 +101,13 @@ export function CustomizationTab({ searchQuery }: { searchQuery?: string }) {
   const setBackgroundBlur = useCustomizationStore((s) => s.setBackgroundBlur);
   const setBackgroundDim = useCustomizationStore((s) => s.setBackgroundDim);
   const setDynamicAccent = useCustomizationStore((s) => s.setDynamicAccent);
+  const setWallpaperAccentColor = useCustomizationStore((s) => s.setWallpaperAccentColor);
   const setBlockConfig = useCustomizationStore((s) => s.setBlockConfig);
   const applyToAllBlocks = useCustomizationStore((s) => s.applyToAllBlocks);
   const resetBlock = useCustomizationStore((s) => s.resetBlock);
   const resetAll = useCustomizationStore((s) => s.resetAll);
 
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const isDark =
     resolvedTheme
       ? resolvedTheme === "dark"
@@ -61,6 +115,35 @@ export function CustomizationTab({ searchQuery }: { searchQuery?: string }) {
         (document.documentElement.getAttribute("data-theme") === "dark" ||
           (!document.documentElement.getAttribute("data-theme") &&
             window.matchMedia?.("(prefers-color-scheme: dark)")?.matches));
+
+  const handleSelectTheme = (themeItem: WallpaperTheme) => {
+    if (resolvedTheme !== "dark") {
+      setTheme("dark");
+    }
+
+    setBackgroundImage(themeItem.image);
+    setBackgroundBlur(themeItem.recommendedBlur);
+    setBackgroundDim(themeItem.recommendedDim);
+    setDynamicAccent(true);
+    setWallpaperAccentColor(themeItem.accentColor);
+    applyDynamicPalette(buildPaletteFromHex(themeItem.accentColor));
+
+    // Set ideal glassmorphism settings
+    setBlockConfig("contentView", { opacity: 35, blur: 14, dim: 15 });
+    setBlockConfig("sidebar", { opacity: 100, blur: 0, dim: 0 });
+    setBlockConfig("miniplayer", { opacity: 60, blur: 20, dim: 15 });
+
+    toast(`Tema "${themeItem.name}" aplicado`, "success");
+  };
+
+  const handleResetDefaultTheme = () => {
+    setBackgroundImage(null);
+    setDynamicAccent(false);
+    setWallpaperAccentColor(null);
+    applyDynamicPalette(null);
+    resetAll();
+    toast("Tema restablecido a SpoPlayer Original", "info");
+  };
 
   const handleFileChange = useCallback(
     (file: File) => {
@@ -131,8 +214,111 @@ export function CustomizationTab({ searchQuery }: { searchQuery?: string }) {
         onChange={onFileInputChange}
       />
 
+      {/* ── Curated Wallpaper Themes Section ── */}
+      <SettingSection label="Temáticas y Fondos Exclusivos">
+        <SettingBlock
+          title="Temáticas SpoPlayer"
+          description="Selecciona uno de los fondos exclusivos para adaptar automáticamente el logo, el acento de color y toda la interfaz de la app."
+          searchQuery={searchQuery}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-[12px] pt-[4px]">
+            {WALLPAPER_THEMES.map((item) => {
+              const active =
+                backgroundImage === item.image ||
+                (wallpaperAccentColor === item.accentColor && Boolean(backgroundImage));
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleSelectTheme(item)}
+                  className={`group relative flex flex-col justify-between h-[120px] p-[12px] rounded-2xl border text-left overflow-hidden transition-all duration-300 cursor-pointer ${
+                    active
+                      ? "border-[var(--accent-primary,#00f59b)] shadow-[0_0_24px_rgba(0,0,0,0.6)] ring-2 ring-[var(--accent-primary,#00f59b)]/50 scale-[1.01]"
+                      : "border-border-primary/60 hover:border-text-tertiary/70 hover:scale-[1.01] shadow-md"
+                  }`}
+                >
+                  {/* Background thumbnail with dark gradient overlay */}
+                  <div className="absolute inset-0 z-0 overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/35 backdrop-blur-[0.5px]" />
+                  </div>
+
+                  {/* Top: Logo variation + Active Badge */}
+                  <div className="relative z-10 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-[10px]">
+                      <ThemeLogoSvg
+                        accentColor={item.accentColor}
+                        gradient={item.gradient}
+                        size={36}
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[14px] font-bold text-white tracking-tight drop-shadow-sm truncate">
+                          {item.name}
+                        </span>
+                        <span className="text-[11px] text-white/75 font-medium truncate max-w-[155px]">
+                          {item.subtitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    {active ? (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10.5px] font-bold text-black flex items-center gap-1 shadow-md shrink-0"
+                        style={{ backgroundColor: item.accentColor }}
+                      >
+                        <CheckLine size={12} />
+                        Activo
+                      </span>
+                    ) : (
+                      <span className="p-1.5 rounded-full bg-black/40 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <SparklesLine size={13} style={{ color: item.accentColor }} />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bottom: Color Palette Pill */}
+                  <div className="relative z-10 flex items-center justify-between mt-auto pt-2">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shadow-sm ring-1 ring-white/30"
+                        style={{ backgroundColor: item.accentColor }}
+                      />
+                      <span className="text-[11.5px] font-mono text-white/90 font-medium">
+                        {item.accentColor}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-white/65 group-hover:text-white transition-colors">
+                      {active ? "Tema aplicado" : "Click para aplicar"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {backgroundImage && (
+            <div className="pt-[10px] flex justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleResetDefaultTheme}
+                className="!text-[12px] !h-[28px] !px-[10px] text-text-secondary hover:text-text-primary"
+              >
+                <Refresh size={14} className="mr-1.5" />
+                Restablecer a tema por defecto (Verde Esmeralda)
+              </Button>
+            </div>
+          )}
+        </SettingBlock>
+      </SettingSection>
+
       {/* ── Background Wallpaper Section ── */}
-      <SettingSection>
+      <SettingSection label="Fondo Personalizado">
         <SettingBlock
           title={t("settings.customization.wallpaper_title") || "Window Wallpaper"}
           description={
