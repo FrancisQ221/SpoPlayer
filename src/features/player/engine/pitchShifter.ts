@@ -19,6 +19,7 @@ import { getOrCreateEqualizerNodes } from "./equalizerEngine";
 import { getOrCreateDynamicLevelingNodes, connectSourceToLeveling } from "./dynamicLeveling";
 import { getOrCreateBassSwapFilter } from "./bassSwap";
 import { getOrCreateSpatialAudioNodes } from "./spatialAudio";
+import { usePlayerStore } from "../store/playerStore";
 
 const GRAIN_PERIOD = 0.038; // 38ms grain window
 const NUM_TAPS = 4;

@@ -1,3 +1,5 @@
+import { hexToRgb } from "./logoTint";
+
 export interface ExtractedPalette {
   primary: string;
   secondary: string;
@@ -269,22 +271,6 @@ export function applyDynamicPalette(palette: ExtractedPalette | null) {
   root.style.setProperty("--color-bg-toolbox-active", palette.toolboxActive);
   root.style.setProperty("--color-border-alpha-14", palette.borderAlpha14);
   root.style.setProperty("--color-border-alpha-33", palette.borderAlpha33);
-}
-
-export function hexToRgb(hex: string): [number, number, number] {
-  let c = hex.replace("#", "").trim();
-  if (c.length === 3) {
-    c = c
-      .split("")
-      .map((x) => x + x)
-      .join("");
-  }
-  if (c.length < 6) {
-    return [0, 245, 155];
-  }
-  const num = parseInt(c.slice(0, 6), 16);
-  if (isNaN(num)) return [0, 245, 155];
-  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
 }
 
 export function buildPaletteFromHex(hex: string): ExtractedPalette {

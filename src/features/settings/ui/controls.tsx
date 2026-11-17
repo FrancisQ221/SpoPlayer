@@ -13,7 +13,7 @@ export function SettingRow({
   searchQuery,
 }: {
   title: string;
-  description?: string;
+  description?: ReactNode;
   control?: ReactNode;
   titleKey?: string;
   descKey?: string;
@@ -23,7 +23,7 @@ export function SettingRow({
     const q = searchQuery.toLowerCase().trim();
     let isMatch =
       title.toLowerCase().includes(q) ||
-      (description ? description.toLowerCase().includes(q) : false);
+      (typeof description === "string" ? description.toLowerCase().includes(q) : false);
 
     if (!isMatch && (titleKey || descKey)) {
       const allTexts: string[] = [];
@@ -68,7 +68,7 @@ export function SettingBlock({
   searchQuery,
 }: {
   title: string;
-  description?: string;
+  description?: ReactNode;
   children: ReactNode;
   titleKey?: string;
   descKey?: string;
@@ -78,7 +78,7 @@ export function SettingBlock({
     const q = searchQuery.toLowerCase().trim();
     let isMatch =
       title.toLowerCase().includes(q) ||
-      (description ? description.toLowerCase().includes(q) : false);
+      (typeof description === "string" ? description.toLowerCase().includes(q) : false);
 
     if (!isMatch && (titleKey || descKey)) {
       const allTexts: string[] = [];
