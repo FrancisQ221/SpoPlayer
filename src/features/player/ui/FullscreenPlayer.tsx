@@ -438,17 +438,17 @@ export function FullscreenPlayer({
                       ? "bg-[var(--accent-primary,#00f59b)]/15 border-[var(--accent-primary,#00f59b)]/35 text-[var(--accent-primary,#00f59b)] shadow-[0_0_12px_rgba(0,245,155,0.2)]"
                       : "bg-black/50 hover:bg-black/70 border-white/10 text-white/80 hover:text-white"
                   }`}
-                  title="Alternar entre modo Cinemático y modo Estándar (C)"
+                  title={t("settings.shortcuts.toggle_lyrics_mode_desc") || "Alternar entre modo Cinemático y modo Estándar (C)"}
                 >
                   {lyricsViewMode === "cinematic" ? (
                     <>
                       <SparklesLine size={14} className="text-[var(--accent-primary,#00f59b)] shrink-0" />
-                      <span>Modo Cinemático</span>
+                      <span>{t("player.cinematic_lyrics") || "Modo Cinemático"}</span>
                     </>
                   ) : (
                     <>
                       <TextLine size={14} className="text-white/70 shrink-0" />
-                      <span>Modo Estándar</span>
+                      <span>{t("player.standard_lyrics") || "Modo Estándar"}</span>
                     </>
                   )}
                 </button>
@@ -458,10 +458,10 @@ export function FullscreenPlayer({
                 type="button"
                 onClick={openZenVisualizer}
                 className="flex items-center gap-1.5 h-[32px] px-3 rounded-lg text-xs font-medium bg-black/50 hover:bg-black/70 backdrop-blur-xl border border-white/10 text-white/85 hover:text-[var(--accent-primary,#00f59b)] hover:border-[var(--accent-primary,#00f59b)]/30 transition-all cursor-pointer select-none active:scale-95"
-                title="Abrir Visualizador Zen Reactivo a pantalla completa (V)"
+                title={t("settings.shortcuts.toggle_zen_mode_desc") || "Abrir Visualizador Zen Reactivo a pantalla completa (V)"}
               >
                 <WaveLine size={14} className="text-[var(--accent-primary,#00f59b)] shrink-0" />
-                <span>Modo Zen</span>
+                <span>{t("player.zen_mode") || "Modo Zen"}</span>
               </button>
             </div>
           </div>
@@ -574,10 +574,10 @@ export function FullscreenPlayer({
           onClick={openZenVisualizer}
           data-no-window-drag
           className="inline-flex items-center gap-1.5 h-[32px] px-3 rounded-lg text-xs font-semibold bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/10 text-white/90 hover:text-[var(--accent-primary,#00f59b)] hover:border-[var(--accent-primary,#00f59b)]/35 active:scale-95 transition-all cursor-pointer select-none shadow-sm"
-          title="Abrir Visualizador Zen Reactivo a pantalla completa (V)"
+          title={t("settings.shortcuts.toggle_zen_mode_desc") || "Abrir Visualizador Zen Reactivo a pantalla completa (V)"}
         >
           <WaveLine size={14} className="text-[var(--accent-primary,#00f59b)] shrink-0" />
-          <span>Modo Zen</span>
+          <span>{t("player.zen_mode") || "Modo Zen"}</span>
         </button>
       </div>
     </div>

@@ -783,11 +783,11 @@ export default function AppFrame({ children }: AppFrameProps) {
                 type="button"
                 onClick={handleSearchToggle}
                 className="pointer-events-auto flex items-center gap-3 h-[42px] px-6 rounded-full bg-[#0e1612]/90 hover:bg-[#14201a]/95 border border-[var(--accent-primary,#00f59b)]/35 hover:border-[var(--accent-primary,#00f59b)]/70 backdrop-blur-2xl shadow-[0_4px_24px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_28px_var(--border-white-alpha-33)] transition-all duration-200 cursor-pointer group active:scale-[0.98]"
-                title="Buscar canciones, artistas o álbumes (Ctrl + K)"
+                title={t("settings.shortcuts.search_desc") || "Buscar canciones, artistas o álbumes (Ctrl + K)"}
               >
                 <Search3Fill className="w-[18px] h-[18px] text-[var(--accent-primary,#00f59b)] group-hover:scale-110 transition-transform shrink-0" />
                 <span className="text-[13px] font-medium text-text-secondary group-hover:text-text-primary transition-colors select-none">
-                  Buscar canciones, artistas, álbumes...
+                  {t("library.search_music") ? `${t("library.search_music")}...` : "Buscar canciones, artistas, álbumes..."}
                 </span>
                 <span className="hidden sm:inline-flex items-center text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--accent-primary,#00f59b)] border border-[var(--accent-primary,#00f59b)]/25 select-none ml-2">
                   Ctrl K
