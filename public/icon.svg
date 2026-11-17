@@ -1,0 +1,22 @@
+﻿<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="spoplayer-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00DE94"/>
+      <stop offset="100%" stop-color="#00BB7E"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#spoplayer-gradient)"/>
+  <g fill="#07130E">
+    <!-- Bar 1 -->
+    <rect x="68" y="168" width="47" height="176" rx="23.5"/>
+    <!-- Bar 2 -->
+    <rect x="150" y="86" width="47" height="340" rx="23.5"/>
+    <!-- Bar 3 -->
+    <rect x="232.5" y="141" width="47" height="230" rx="23.5"/>
+    <!-- Bar 4 -->
+    <rect x="315" y="67" width="47" height="378" rx="23.5"/>
+    <!-- Bar 5 -->
+    <rect x="397.5" y="196" width="47" height="120" rx="23.5"/>
+  </g>
+</svg>
+
